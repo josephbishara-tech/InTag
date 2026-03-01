@@ -1,0 +1,80 @@
+name: InTag CD — Staging
+
+on:
+  workflow_run:
+    workflows: ["InTag CI"]
+    branches: [main, 'release/**']
+    types: [completed]
+
+env:
+  AZURE_WEBAPP_NAME: intag-web-staging
+  AZURE_RESOURCE_GROUP: intag-rg
+
+jobs:
+
+  # ═══ DEPLOY TO STAGING ═══
+  deploy-staging:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment:
+      name: staging
+      url: https://staging.intag.io
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: intag-web-${{ github.event.workflow_run.head_sha }}
+          path: ./publish
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Staging Slot
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: staging
+          package: ./publish
+
+      - name: Verify Health Check
+        run: |
+          echo "Waiting for staging to be ready..."
+          sleep 30
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://staging.intag.io/health/live)
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed with status: $STATUS"
+            exit 1
+          fi
+          echo "Staging is healthy!"
+
+  # ═══ INTEGRATION TESTS ═══
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Run Integration Tests
+        run: |
+          dotnet test InTagWeb.IntegrationTests/InTagWeb.IntegrationTests.csproj \
+            --configuration Release \
+            --logger "trx;LogFileName=integration-results.trx"
+        env:
+          TEST_BASE_URL: https://staging.intag.io
+
+      - name: Upload Integration Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-results
+          path: ./**/integration-results.trxs

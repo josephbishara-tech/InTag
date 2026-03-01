@@ -1,0 +1,97 @@
+name: InTag CD — Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      artifact_sha:
+        description: 'Commit SHA of the artifact to deploy'
+        required: true
+
+env:
+  AZURE_WEBAPP_NAME: intag-web-production
+  AZURE_RESOURCE_GROUP: intag-rg
+
+jobs:
+
+  # ═══ MANUAL APPROVAL + DEPLOY ═══
+  deploy-production:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://app.intag.io
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: intag-web-${{ github.event.inputs.artifact_sha }}
+          path: ./publish
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Blue-green: deploy to staging slot first
+      - name: Deploy to Staging Slot
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          slot-name: staging
+          package: ./publish
+
+      - name: Verify Staging Slot Health
+        run: |
+          sleep 30
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://intag-web-production-staging.azurewebsites.net/health/live)
+          if [ "$STATUS" != "200" ]; then
+            echo "Staging slot health check failed: $STATUS"
+            exit 1
+          fi
+
+      # Swap slots — zero-downtime deployment
+      - name: Swap to Production
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            az webapp deployment slot swap \
+              --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+              --name ${{ env.AZURE_WEBAPP_NAME }} \
+              --slot staging \
+              --target-slot production
+
+  # ═══ SMOKE TESTS ═══
+  smoke-tests:
+    runs-on: ubuntu-latest
+    needs: deploy-production
+    steps:
+      - name: Health Check
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://app.intag.io/health)
+          echo "Health endpoint returned: $STATUS"
+          [ "$STATUS" == "200" ] || exit 1
+
+      - name: API Smoke Test
+        run: |
+          # Test auth endpoint is reachable
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST https://app.intag.io/api/v1/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email":"smoke@test.invalid","password":"invalid"}')
+          echo "Auth endpoint returned: $STATUS"
+          # Expecting 401 (unauthorized) — not 500
+          [ "$STATUS" == "401" ] || exit 1
+
+      - name: Homepage Smoke Test
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://app.intag.io/)
+          echo "Homepage returned: $STATUS"
+          # Expecting 200 or 302 (redirect to login)
+          [ "$STATUS" == "200" ] || [ "$STATUS" == "302" ] || exit 1
+
+      - name: Notify Success
+        if: success()
+        run: echo "✅ Production deployment verified successfully!"
+
+      - name: Notify Failure
+        if: failure()
+        run: echo "❌ Smoke tests failed — consider rolling back!"
