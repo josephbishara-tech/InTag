@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="InTagDataLayer/InTagDataLayer.csproj" />
+  <Project Path="InTagEntitiesLayer/InTagEntitiesLayer.csproj" />
+  <Project Path="InTagLogicLayer/InTagLogicLayer.csproj" />
+  <Project Path="InTagRepositoryLayer/InTagRepositoryLayer.csproj" />
+  <Project Path="InTagViewModelLayer/InTagViewModelLayer.csproj" />
+  <Project Path="InTagWeb/InTagWeb.csproj" />
+</Solution>

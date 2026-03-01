@@ -1,0 +1,107 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+    <span class="text-muted">@DateTime.Now.ToString("dddd, MMMM d, yyyy")</span>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted small mb-1">Total Assets</p>
+                        <h3 class="mb-0 fw-bold">—</h3>
+                    </div>
+                    <div class="bg-primary bg-opacity-10 rounded-3 p-3">
+                        <i class="bi bi-building-gear fs-4 text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted small mb-1">Open Work Orders</p>
+                        <h3 class="mb-0 fw-bold">—</h3>
+                    </div>
+                    <div class="bg-warning bg-opacity-10 rounded-3 p-3">
+                        <i class="bi bi-wrench-adjustable fs-4 text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted small mb-1">Documents Due Review</p>
+                        <h3 class="mb-0 fw-bold">—</h3>
+                    </div>
+                    <div class="bg-info bg-opacity-10 rounded-3 p-3">
+                        <i class="bi bi-file-earmark-text fs-4 text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted small mb-1">Production Orders</p>
+                        <h3 class="mb-0 fw-bold">—</h3>
+                    </div>
+                    <div class="bg-success bg-opacity-10 rounded-3 p-3">
+                        <i class="bi bi-gear-wide-connected fs-4 text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions & Recent Activity -->
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-bottom">
+                <h6 class="mb-0 fw-bold">Recent Activity</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Activity feed will appear here once modules are active.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-bottom">
+                <h6 class="mb-0 fw-bold">Quick Actions</h6>
+            </div>
+            <div class="card-body d-grid gap-2">
+                <a href="#" class="btn btn-outline-primary btn-sm text-start">
+                    <i class="bi bi-plus-circle me-2"></i>New Asset
+                </a>
+                <a href="#" class="btn btn-outline-primary btn-sm text-start">
+                    <i class="bi bi-plus-circle me-2"></i>New Work Order
+                </a>
+                <a href="#" class="btn btn-outline-primary btn-sm text-start">
+                    <i class="bi bi-plus-circle me-2"></i>Upload Document
+                </a>
+                <a href="#" class="btn btn-outline-primary btn-sm text-start">
+                    <i class="bi bi-plus-circle me-2"></i>Create Production Order
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
