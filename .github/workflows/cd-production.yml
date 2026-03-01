@@ -21,7 +21,7 @@ jobs:
       url: https://app.intag.io
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: intag-web-${{ github.event.inputs.artifact_sha }}
           path: ./publish
