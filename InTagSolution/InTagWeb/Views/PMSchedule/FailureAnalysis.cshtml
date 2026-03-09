@@ -1,0 +1,97 @@
+@model InTagViewModelLayer.Maintenance.FailureAnalysisVm
+
+<div class="content-header"><h1><i class="bi bi-bug me-2"></i>Failure Analysis</h1></div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Total Failures</small><h3 class="fw-bold text-danger mb-0">@Model.TotalFailures</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Total Downtime</small><h3 class="fw-bold mb-0">@Model.TotalDowntimeHours.ToString("N0") hrs</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Avg Repair Time</small><h3 class="fw-bold mb-0">@Model.AvgRepairTimeHours.ToString("N1") hrs</h3></div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- By Type -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Failure Type</h6></div>
+            <div class="card-body">
+                @foreach (var t in Model.ByType)
+                {
+                    <div class="d-flex justify-content-between mb-2"><span>@t.Type</span><span class="fw-bold">@t.Count <small class="text-muted">(@t.Percentage%)</small></span></div>
+                    <div class="progress mb-3" style="height:4px;"><div class="progress-bar bg-danger" style="width:@t.Percentage%"></div></div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Trend -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Monthly Failure Trend</h6></div>
+            <div class="card-body">
+                @if (Model.MonthlyTrend.Any())
+                {
+                    var maxCount = Model.MonthlyTrend.Max(m => m.Count);
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead class="table-light"><tr><th>Period</th><th class="text-end">Failures</th><th class="text-end">Downtime (hrs)</th><th style="width:40%;">Distribution</th></tr></thead>
+                            <tbody>
+                                @foreach (var m in Model.MonthlyTrend)
+                                {
+                                    var barW = maxCount > 0 ? (double)m.Count / maxCount * 100 : 0;
+                                    <tr><td>@m.Period</td><td class="text-end">@m.Count</td><td class="text-end">@m.DowntimeHours.ToString("N1")</td><td><div class="progress" style="height:14px;"><div class="progress-bar bg-danger" style="width:@barW%">@m.Count</div></div></td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+
+                    <p class="text-muted text-center py-3">No failure data in this period.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Top Offenders -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Top Failing Assets</h6></div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Asset</th><th class="text-end">Failures</th><th class="text-end">Downtime</th><th class="text-end">Avg Repair</th></tr></thead>
+                    <tbody>
+                        @foreach (var a in Model.ByAsset)
+                        {
+                            <tr><td><a asp-controller="Asset" asp-action="Details" asp-route-id="@a.AssetId" class="text-decoration-none fw-bold">@a.AssetCode</a><br /><small class="text-muted">@a.AssetName</small></td><td class="text-end text-danger fw-bold">@a.FailureCount</td><td class="text-end">@a.TotalDowntime.ToString("N1")h</td><td class="text-end">@a.AvgRepairTime.ToString("N1")h</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Repeat Failures -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Repeat Failure Patterns</h6></div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Asset</th><th>Failure Type</th><th class="text-end">Occurrences</th><th>Common Cause</th></tr></thead>
+                    <tbody>
+                        @if (!Model.TopRepeatFailures.Any())
+                        {
+                            <tr><td colspan="4" class="text-center text-muted py-3">No repeat patterns detected.</td></tr>
+                        }
+                        @foreach (var r in Model.TopRepeatFailures)
+                        {
+                            <tr><td class="fw-bold">@r.AssetCode</td><td><span class="badge bg-danger">@r.FailureType</span></td><td class="text-end fw-bold">@r.OccurrenceCount</td><td><small class="text-muted">@(r.CommonCause ?? "—")</small></td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,48 @@
+@model InTagViewModelLayer.Inventory.InventoryValuationVm
+
+<div class="content-header"><h1><i class="bi bi-currency-dollar me-2"></i>Inventory Valuation</h1></div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-3"><small class="text-muted">Total Inventory Value</small><h2 class="fw-bold text-primary mb-0">@Model.TotalValue.ToString("C0")</h2></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-3"><small class="text-muted">Total SKUs</small><h2 class="fw-bold mb-0">@Model.TotalSKUs</h2></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-3"><small class="text-muted">Warehouses</small><h2 class="fw-bold mb-0">@Model.ByWarehouse.Count</h2></div></div></div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Warehouse</h6></div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Warehouse</th><th class="text-end">SKUs</th><th class="text-end">Qty</th><th class="text-end">Value</th></tr></thead>
+                    <tbody>
+                        @foreach (var w in Model.ByWarehouse)
+                        {
+                            <tr><td class="fw-bold">@w.WarehouseCode<br /><small class="text-muted">@w.WarehouseName</small></td><td class="text-end">@w.SKUs</td><td class="text-end">@w.TotalQuantity.ToString("N0")</td><td class="text-end fw-bold">@w.TotalValue.ToString("C0")</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Product</h6></div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Product</th><th class="text-end">Qty</th><th class="text-end">Unit Cost</th><th class="text-end">Total</th><th>Method</th></tr></thead>
+                    <tbody>
+                        @{
+                            var maxVal = Model.ByProduct.Any() ? Model.ByProduct.Max(p => p.TotalValue) : 1;
+                        }
+                        @foreach (var p in Model.ByProduct.Take(20))
+                        {
+                            var barW = maxVal > 0 ? (double)(p.TotalValue / maxVal * 100) : 0;
+                            <tr><td><strong>@p.ProductCode</strong><br /><small class="text-muted">@p.ProductName</small></td><td class="text-end">@p.TotalQuantity.ToString("N2")</td><td class="text-end">@p.UnitCost.ToString("C4")</td><td class="text-end fw-bold">@p.TotalValue.ToString("C2")</td><td><div class="progress" style="height:6px;width:60px;"><div class="progress-bar bg-primary" style="width:@barW%"></div></div></td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

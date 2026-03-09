@@ -1,4 +1,4 @@
-﻿using InTagDataLayer.Context;
+using InTagDataLayer.Context;
 using InTagEntitiesLayer.Common;
 using InTagEntitiesLayer.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -30,11 +30,18 @@ namespace InTagLogicLayer.Services
 
         public async Task<Tenant?> ResolveFromHostAsync(string host)
         {
-            // 1. Try custom domain first (e.g. assets.acmecorp.com)
-            var tenant = await ResolveByCustomDomainAsync(host);
+            // Remove port (e.g. "localhost:5001" → "localhost")
+            var hostOnly = host.Split(':')[0];
+
+            // 1. Try custom domain first (handles localhost too)
+            var tenant = await ResolveByCustomDomainAsync(hostOnly);
             if (tenant != null) return tenant;
 
-            // 2. Try subdomain (e.g. acme.intag.io → subdomain = "acme")
+            // 2. Try subdomain match (e.g. "acme.intag.io")
+            tenant = await ResolveBySubdomainAsync(hostOnly);
+            if (tenant != null) return tenant;
+
+            // 3. Try subdomain extraction (e.g. extract "acme" from "acme.intag.io")
             var subdomain = ExtractSubdomain(host);
             if (!string.IsNullOrEmpty(subdomain))
             {

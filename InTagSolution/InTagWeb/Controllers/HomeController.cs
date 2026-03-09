@@ -1,9 +1,12 @@
 using InTagWeb.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
 namespace InTagWeb.Controllers
 {
+    //[Authorize]
+    [AllowAnonymous]
     public class HomeController : Controller
     {
         public IActionResult Index()

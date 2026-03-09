@@ -1,0 +1,90 @@
+@model InTagViewModelLayer.Manufacturing.ProductionOrderListResultVm
+@using InTagEntitiesLayer.Enums
+@{
+    var filter = ViewBag.CurrentFilter as InTagViewModelLayer.Manufacturing.ProductionOrderFilterVm;
+}
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-gear-wide-connected me-2"></i>Production Orders</h1>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>New Order</a>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <input type="text" name="SearchTerm" value="@filter?.SearchTerm" class="form-control form-control-sm" placeholder="Search order #, product..." />
+            </div>
+            <div class="col-md-2">
+                <select name="Status" class="form-select form-select-sm" asp-items="ViewBag.Statuses"><option value="">All Statuses</option></select>
+            </div>
+            <div class="col-md-2">
+                <select name="Priority" class="form-select form-select-sm" asp-items="ViewBag.Priorities"><option value="">All Priorities</option></select>
+            </div>
+            <div class="col-md-1"><button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-search"></i></button></div>
+            <div class="col-md-1"><a asp-action="Index" class="btn btn-sm btn-outline-secondary w-100">Clear</a></div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><span class="small text-muted">@Model.TotalCount order(s)</span></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr><th>Order #</th><th>Product</th><th>Qty</th><th>Progress</th><th>Status</th><th>Priority</th><th>Start</th><th></th></tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No orders found. <a asp-action="Create">Create one</a>.</td></tr>
+                }
+                @foreach (var item in Model.Items)
+                {
+                    var pct = item.PlannedQuantity > 0 ? (double)(item.CompletedQuantity / item.PlannedQuantity * 100) : 0;
+                    var statusBadge = item.Status switch
+                    {
+                        ProductionOrderStatus.InProgress => "bg-primary",
+                        ProductionOrderStatus.Completed => "bg-success",
+                        ProductionOrderStatus.Released => "bg-info",
+                        ProductionOrderStatus.Cancelled => "bg-danger",
+                        ProductionOrderStatus.Closed => "bg-dark",
+                        _ => "bg-secondary"
+                    };
+                    var priorityBadge = item.Priority switch
+                    {
+                        ProductionPriority.Urgent => "bg-danger",
+                        ProductionPriority.High => "bg-warning text-dark",
+                        _ => "bg-light text-dark"
+                    };
+                    <tr>
+                        <td><a asp-action="Details" asp-route-id="@item.Id" class="fw-bold text-decoration-none">@item.OrderNumber</a></td>
+                        <td>@item.ProductName</td>
+                        <td>@item.CompletedQuantity / @item.PlannedQuantity</td>
+                        <td style="width:120px;">
+                            <div class="progress" style="height:6px;"><div class="progress-bar" style="width:@pct%"></div></div>
+                        </td>
+                        <td><span class="badge @statusBadge">@item.StatusDisplay</span></td>
+                        <td><span class="badge @priorityBadge">@item.PriorityDisplay</span></td>
+                        <td><small>@item.PlannedStartDate?.ToString("d")</small></td>
+                        <td><a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.TotalPages > 1)
+    {
+        <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+            <span class="small text-muted">Page @Model.Page of @Model.TotalPages</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    @for (var p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
+                    {
+                        <li class="page-item @(p == Model.Page ? "active" : "")"><a class="page-link" asp-action="Index" asp-route-Page="@p" asp-route-SearchTerm="@filter?.SearchTerm" asp-route-Status="@filter?.Status">@p</a></li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    }
+</div>

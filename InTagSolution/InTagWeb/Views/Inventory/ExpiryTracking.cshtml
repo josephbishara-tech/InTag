@@ -1,0 +1,47 @@
+@model InTagViewModelLayer.Inventory.ExpiryReportVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-calendar-x me-2"></i>Expiry Tracking</h1>
+    <form method="get" class="d-flex gap-2">
+        <select name="days" class="form-select form-select-sm" onchange="this.form.submit()" style="width:160px;">
+            @foreach (var d in new[] { 7, 14, 30, 60, 90 })
+            {
+                <option value="@d" selected="@(ViewBag.Days == d)">Next @d days</option>
+            }
+        </select>
+    </form>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center border-start border-danger border-4"><div class="card-body py-2"><small class="text-muted">Expired</small><h3 class="fw-bold text-danger mb-0">@Model.ExpiredCount</h3><small class="text-muted">@Model.ExpiredValue.ToString("C0") value</small></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center border-start border-warning border-4"><div class="card-body py-2"><small class="text-muted">Expiring Soon</small><h3 class="fw-bold text-warning mb-0">@Model.ExpiringSoonCount</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Total At Risk</small><h3 class="fw-bold mb-0">@Model.Items.Count</h3></div></div></div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Product</th><th>Warehouse</th><th>Lot</th><th class="text-end">Qty</th><th class="text-end">Value</th><th>Expiry</th><th class="text-end">Days</th><th>Status</th></tr></thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-4">No items expiring or expired within the threshold.</td></tr>
+                }
+                @foreach (var item in Model.Items)
+                {
+                    var sBadge = item.Status == "Expired" ? "bg-danger" : "bg-warning text-dark";
+                    <tr class="@(item.Status == "Expired" ? "table-danger" : "table-warning")">
+                        <td><strong>@item.ProductCode</strong><br /><small class="text-muted">@item.ProductName</small></td>
+                        <td>@item.WarehouseCode</td>
+                        <td><small>@(item.LotNumber ?? "—")</small></td>
+                        <td class="text-end">@item.QuantityOnHand.ToString("N2")</td>
+                        <td class="text-end">@item.TotalValue.ToString("C2")</td>
+                        <td><small>@item.ExpiryDate.ToString("d")</small></td>
+                        <td class="text-end fw-bold @(item.DaysUntilExpiry < 0 ? "text-danger" : "")">@item.DaysUntilExpiry</td>
+                        <td><span class="badge @sBadge">@item.Status</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

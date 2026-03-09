@@ -1,0 +1,191 @@
+@model InTagViewModelLayer.Asset.DepreciationSummaryVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-graph-down-arrow me-2"></i>Depreciation Overview</h1>
+    <div class="d-flex gap-2">
+        <form method="get" class="d-flex gap-1">
+            <select name="year" class="form-select form-select-sm" style="width: 120px;"
+                    onchange="this.form.submit()">
+                @for (var y = DateTime.Now.Year; y >= DateTime.Now.Year - 5; y--)
+                {
+                    <option value="@y" selected="@(y == Model.FiscalYear)">@y</option>
+                }
+            </select>
+        </form>
+        <a asp-action="Run" class="btn btn-primary btn-sm">
+            <i class="bi bi-play-fill me-1"></i>Run Depreciation
+        </a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Total Asset Cost</p>
+                <h3 class="fw-bold mb-0">@Model.TotalPurchaseCost.ToString("C0")</h3>
+                <small class="text-muted">@Model.TotalAssets assets</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Current Book Value</p>
+                <h3 class="fw-bold text-primary mb-0">@Model.TotalBookValue.ToString("C0")</h3>
+                @{
+                    var retainedPct = Model.TotalPurchaseCost > 0
+                    ? (Model.TotalBookValue / Model.TotalPurchaseCost * 100) : 0;
+                }
+                <small class="text-muted">@retainedPct.ToString("F1")% of original cost</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Depreciation This Year</p>
+                <h3 class="fw-bold text-danger mb-0">@Model.TotalDepreciationThisYear.ToString("C0")</h3>
+                <small class="text-muted">FY @Model.FiscalYear</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <p class="text-muted small mb-1">Fully Depreciated</p>
+                <h3 class="fw-bold text-warning mb-0">@Model.FullyDepreciatedAssets</h3>
+                <small class="text-muted">of @Model.DepreciableAssets depreciable</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- By Month Chart area -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0 fw-bold">Monthly Depreciation — @Model.FiscalYear</h6>
+            </div>
+            <div class="card-body">
+                @if (Model.ByMonth.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Period</th>
+                                    <th class="text-end">Amount</th>
+                                    <th class="text-end">Assets</th>
+                                    <th style="width: 40%;">Distribution</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var maxMonthly = Model.ByMonth.Any() ? Model.ByMonth.Max(m => m.TotalDepreciation) : 1;
+                                }
+                                @foreach (var month in Model.ByMonth)
+                                {
+                                    var barWidth = maxMonthly > 0 ? (double)(month.TotalDepreciation / maxMonthly * 100) : 0;
+                                    <tr>
+                                        <td>@month.Period</td>
+                                        <td class="text-end">@month.TotalDepreciation.ToString("C2")</td>
+                                        <td class="text-end">@month.AssetsProcessed</td>
+                                        <td>
+                                            <div class="progress" style="height: 18px;">
+                                                <div class="progress-bar bg-primary" style="width: @barWidth%"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr class="fw-bold">
+                                    <td>Total</td>
+                                    <td class="text-end">@Model.TotalDepreciationThisYear.ToString("C2")</td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-3">
+                        No depreciation recorded for @Model.FiscalYear.
+                        <a asp-action="Run">Run depreciation now</a>.
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- By Method -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent">
+                <h6 class="mb-0 fw-bold">By Method</h6>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach (var m in Model.ByMethod)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold">@m.Method</span>
+                                <br /><small class="text-muted">@m.AssetCount assets</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">@m.TotalDepreciation.ToString("C0")</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- By Category -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent">
+        <h6 class="mb-0 fw-bold">By Asset Category</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Category</th>
+                    <th class="text-end">Assets</th>
+                    <th class="text-end">Total Cost</th>
+                    <th class="text-end">Book Value</th>
+                    <th class="text-end">Acc. Depreciation</th>
+                    <th>Depreciation %</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cat in Model.ByCategory)
+                {
+                    var depPct = cat.TotalCost > 0 ? (double)(cat.TotalDepreciation / cat.TotalCost * 100) : 0;
+                    <tr>
+                        <td class="fw-bold">@cat.Category</td>
+                        <td class="text-end">@cat.AssetCount</td>
+                        <td class="text-end">@cat.TotalCost.ToString("C0")</td>
+                        <td class="text-end">@cat.TotalBookValue.ToString("C0")</td>
+                        <td class="text-end">@cat.TotalDepreciation.ToString("C0")</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 6px;">
+                                    <div class="progress-bar @(depPct > 80 ? "bg-danger" : depPct > 50 ? "bg-warning" : "bg-success")"
+                                         style="width: @depPct%"></div>
+                                </div>
+                                <small>@depPct.ToString("F0")%</small>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

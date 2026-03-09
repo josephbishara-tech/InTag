@@ -1,0 +1,121 @@
+﻿@model InTagViewModelLayer.Asset.AssetUpdateVm
+@{
+    var assetId = ViewBag.AssetId as int?;
+    var assetCode = ViewBag.AssetCode as string;
+}
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-pencil me-2"></i>Edit @assetCode</h1>
+    <a asp-action="Details" asp-route-id="@assetId" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form asp-action="Edit" asp-route-id="@assetId" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Category" class="form-label"></label>
+                    <select asp-for="Category" asp-items="ViewBag.Categories" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="AssetTypeId" class="form-label">Asset Type</label>
+                    <select asp-for="AssetTypeId" asp-items="ViewBag.AssetTypes" class="form-select">
+                        <option value="">— Select —</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label asp-for="LocationId" class="form-label">Location</label>
+                    <select asp-for="LocationId" asp-items="ViewBag.Locations" class="form-select">
+                        <option value="">— None —</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DepartmentId" class="form-label">Department</label>
+                    <select asp-for="DepartmentId" asp-items="ViewBag.Departments" class="form-select">
+                        <option value="">— None —</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="VendorId" class="form-label">Vendor</label>
+                    <select asp-for="VendorId" asp-items="ViewBag.Vendors" class="form-select">
+                        <option value="">— None —</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label asp-for="SerialNumber" class="form-label"></label>
+                    <input asp-for="SerialNumber" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Barcode" class="form-label"></label>
+                    <input asp-for="Barcode" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Manufacturer" class="form-label"></label>
+                    <input asp-for="Manufacturer" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="ModelNumber" class="form-label"></label>
+                    <input asp-for="ModelNumber" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label asp-for="SalvageValue" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input asp-for="SalvageValue" class="form-control" type="number" step="0.01" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="WarrantyStartDate" class="form-label"></label>
+                    <input asp-for="WarrantyStartDate" class="form-control" type="date" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="WarrantyEndDate" class="form-label"></label>
+                    <input asp-for="WarrantyEndDate" class="form-control" type="date" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="WarrantyTerms" class="form-label"></label>
+                    <input asp-for="WarrantyTerms" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="Notes" class="form-label"></label>
+                <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>Save Changes
+                </button>
+                <a asp-action="Details" asp-route-id="@assetId" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

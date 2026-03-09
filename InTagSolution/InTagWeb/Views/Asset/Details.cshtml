@@ -1,0 +1,274 @@
+@model InTagViewModelLayer.Asset.AssetDetailVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-building-gear me-2"></i>@Model.AssetCode</h1>
+        <p class="text-muted mb-0">@Model.Name</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i>Edit
+        </a>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Left Column -->
+    <div class="col-lg-8">
+        <!-- General Info -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">General Information</h6></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Asset Code</small>
+                        <strong>@Model.AssetCode</strong>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Status</small>
+                        @{
+                            var detailBadge = Model.Status switch
+                            {
+                                AssetStatus.Operational => "bg-success",
+                                AssetStatus.Draft => "bg-secondary",
+                                AssetStatus.UnderMaintenance => "bg-warning text-dark",
+                                AssetStatus.Decommissioned => "bg-danger",
+                                AssetStatus.Disposed => "bg-dark",
+                                _ => "bg-info"
+                            };
+                        }
+                        <span class="badge @detailBadge">@Model.StatusDisplay</span>
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Category</small>
+                        @Model.CategoryDisplay
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Asset Type</small>
+                        @(Model.AssetTypeName ?? "—")
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Location</small>
+                        @(Model.LocationName ?? "—")
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Department</small>
+                        @(Model.DepartmentName ?? "—")
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Vendor</small>
+                        @(Model.VendorName ?? "—")
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Parent Asset</small>
+                        @if (Model.ParentAssetId.HasValue)
+                        {
+                            <a asp-action="Details" asp-route-id="@Model.ParentAssetId">@Model.ParentAssetName</a>
+                        }
+                        else
+                        {
+
+                            <span>—</span>
+                        }
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        <div class="col-12">
+                            <small class="text-muted d-block">Description</small>
+                            @Model.Description
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Identification -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Identification</h6></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Serial Number</small>
+                        @(Model.SerialNumber ?? "—")
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Barcode</small>
+                        @(Model.Barcode ?? "—")
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Manufacturer</small>
+                        @(Model.Manufacturer ?? "—")
+                    </div>
+                    <div class="col-sm-6">
+                        <small class="text-muted d-block">Model Number</small>
+                        @(Model.ModelNumber ?? "—")
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Financial</h6></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-4">
+                        <small class="text-muted d-block">Purchase Cost</small>
+                        <strong class="fs-5">@Model.PurchaseCost.ToString("C")</strong>
+                    </div>
+                    <div class="col-sm-4">
+                        <small class="text-muted d-block">Current Book Value</small>
+                        <strong class="fs-5 text-primary">@Model.CurrentBookValue.ToString("C")</strong>
+                    </div>
+                    <div class="col-sm-4">
+                        <small class="text-muted d-block">Accumulated Depreciation</small>
+                        <strong class="fs-5 text-danger">@Model.AccumulatedDepreciation.ToString("C")</strong>
+                    </div>
+                    <div class="col-sm-4">
+                        <small class="text-muted d-block">Salvage Value</small>
+                        @(Model.SalvageValue?.ToString("C") ?? "—")
+                    </div>
+                    <div class="col-sm-4">
+                        <small class="text-muted d-block">Depreciation Method</small>
+                        @Model.DepreciationMethod
+                    </div>
+                    <div class="col-sm-4">
+                        <small class="text-muted d-block">Useful Life</small>
+                        @Model.UsefulLifeMonths months
+                    </div>
+                    <!-- Depreciation progress bar -->
+                    <div class="col-12">
+                        @{
+                            var depPercent = Model.PurchaseCost > 0
+                            ? (double)(Model.AccumulatedDepreciation / Model.PurchaseCost * 100)
+                            : 0;
+                        }
+                        <small class="text-muted">Depreciation Progress (@depPercent.ToString("F1")%)</small>
+                        <div class="progress mt-1" style="height: 8px;">
+                            <div class="progress-bar bg-primary" style="width: @depPercent%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+        <!-- Status Actions -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Actions</h6></div>
+            <div class="card-body d-grid gap-2">
+                @{
+                    var transitions = Model.Status switch
+                    {
+                        AssetStatus.Draft => new[] { AssetStatus.Acquired },
+                        AssetStatus.Acquired => new[] { AssetStatus.Commissioned },
+                        AssetStatus.Commissioned => new[] { AssetStatus.Operational },
+                        AssetStatus.Operational => new[] { AssetStatus.UnderMaintenance, AssetStatus.Decommissioned },
+                        AssetStatus.UnderMaintenance => new[] { AssetStatus.Operational, AssetStatus.Decommissioned },
+                        AssetStatus.Decommissioned => new[] { AssetStatus.Disposed },
+                        _ => Array.Empty<AssetStatus>()
+                    };
+                }
+                @foreach (var nextStatus in transitions)
+                {
+                    var btnClass = nextStatus switch
+                    {
+                        AssetStatus.Operational => "btn-success",
+                        AssetStatus.Disposed => "btn-dark",
+                        AssetStatus.Decommissioned => "btn-danger",
+                        _ => "btn-outline-primary"
+                    };
+                    <form asp-action="ChangeStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="newStatus" value="@nextStatus" />
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn @btnClass btn-sm w-100"
+                                onclick="return confirm('Change status to @nextStatus?')">
+                            <i class="bi bi-arrow-right-circle me-1"></i>@nextStatus
+                        </button>
+                    </form>
+                }
+
+                @if (Model.Status != AssetStatus.Disposed)
+                {
+                    <hr class="my-1" />
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100"
+                                onclick="return confirm('Delete this asset?')">
+                            <i class="bi bi-trash me-1"></i>Delete
+                        </button>
+                    </form>
+                }
+
+                <!-- Depreciation Actions -->
+                @if (Model.Status == AssetStatus.Operational || Model.Status == AssetStatus.Commissioned)
+                {
+                    <hr class="my-1" />
+                    <a asp-controller="Depreciation" asp-action="History" asp-route-id="@Model.Id"
+                       class="btn btn-outline-info btn-sm w-100">
+                        <i class="bi bi-clock-history me-1"></i>Depreciation History
+                    </a>
+                    <a asp-controller="Depreciation" asp-action="Forecast" asp-route-id="@Model.Id"
+                       class="btn btn-outline-info btn-sm w-100 mt-1">
+                        <i class="bi bi-graph-up me-1"></i>Forecast
+                    </a>
+                }
+
+            </div>
+        </div>
+
+        <!-- Warranty -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Warranty</h6></div>
+            <div class="card-body">
+                @if (Model.WarrantyEndDate.HasValue)
+                {
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted">Start</small>
+                        <span>@Model.WarrantyStartDate?.ToString("d")</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted">End</small>
+                        <span>@Model.WarrantyEndDate?.ToString("d")</span>
+                    </div>
+                    <span class="badge @(Model.IsUnderWarranty ? "bg-success" : "bg-secondary") mt-1">
+                        @(Model.IsUnderWarranty ? "Under Warranty" : "Expired")
+                    </span>
+                }
+                else
+                {
+                    <p class="text-muted small mb-0">No warranty information.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Dates -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Dates</h6></div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-1">
+                    <small class="text-muted">Acquisition</small>
+                    <span>@(Model.AcquisitionDate?.ToString("d") ?? "—")</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <small class="text-muted">Created</small>
+                    <span>@Model.CreatedDate.ToString("g")</span>
+                </div>
+                @if (Model.ModifiedDate.HasValue)
+                {
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Modified</small>
+                        <span>@Model.ModifiedDate?.ToString("g")</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

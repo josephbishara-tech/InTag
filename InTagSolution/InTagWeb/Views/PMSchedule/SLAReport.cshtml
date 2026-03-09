@@ -1,0 +1,106 @@
+@model InTagViewModelLayer.Maintenance.SLAReportVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header"><h1><i class="bi bi-clock-history me-2"></i>SLA & Backlog Report</h1></div>
+
+<!-- KPI -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-2">
+                <small class="text-muted">SLA Compliance</small>
+                <h3 class="fw-bold mb-0 @(Model.SLACompliancePercent >= 90 ? "text-success" : Model.SLACompliancePercent >= 70 ? "text-warning" : "text-danger")">@Model.SLACompliancePercent%</h3>
+                <div class="progress mt-1" style="height:4px;"><div class="progress-bar @(Model.SLACompliancePercent >= 90 ? "bg-success" : "bg-danger")" style="width:@Model.SLACompliancePercent%"></div></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Met</small><h3 class="fw-bold text-success mb-0">@Model.SLAMetCount</h3></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Breached</small><h3 class="fw-bold text-danger mb-0">@Model.SLABreachedCount</h3></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Avg Response</small><h3 class="fw-bold mb-0">@Model.AvgResponseHours.ToString("N1")h</h3></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Avg Resolution</small><h3 class="fw-bold mb-0">@Model.AvgResolutionHours.ToString("N1")h</h3></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Open Backlog</small><h3 class="fw-bold text-warning mb-0">@Model.Backlog.Count</h3></div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- By Priority -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">SLA by Priority</h6></div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Priority</th><th class="text-end">Total</th><th class="text-end">Met</th><th class="text-end">Breached</th><th>Compliance</th><th class="text-end">Avg Hrs</th></tr></thead>
+                    <tbody>
+                        @foreach (var p in Model.ByPriority)
+                        {
+                            <tr>
+                                <td class="fw-bold">@p.Priority</td>
+                                <td class="text-end">@p.Total</td>
+                                <td class="text-end text-success">@p.Met</td>
+                                <td class="text-end text-danger">@p.Breached</td>
+                                <td><div class="d-flex align-items-center gap-1"><div class="progress flex-grow-1" style="height:6px;"><div class="progress-bar @(p.CompliancePercent >= 90 ? "bg-success" : "bg-danger")" style="width:@p.CompliancePercent%"></div></div><small>@p.CompliancePercent%</small></div></td>
+                                <td class="text-end">@p.AvgResolutionHours.ToString("N1")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breached -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">SLA Breaches</h6></div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>WO #</th><th>Asset</th><th>Priority</th><th class="text-end">SLA</th><th class="text-end">Actual</th><th class="text-end">Overage</th></tr></thead>
+                    <tbody>
+                        @if (!Model.BreachedOrders.Any())
+                        {
+                            <tr><td colspan="6" class="text-center text-muted py-3">No SLA breaches. Excellent!</td></tr>
+                        }
+                        @foreach (var b in Model.BreachedOrders)
+                        {
+                            <tr class="table-danger">
+                                <td><a asp-controller="WorkOrder" asp-action="Details" asp-route-id="@b.Id" class="text-decoration-none fw-bold">@b.WorkOrderNumber</a></td>
+                                <td>@b.AssetCode</td>
+                                <td><span class="badge @(b.Priority == WorkOrderPriority.Critical ? "bg-danger" : "bg-warning text-dark")">@b.Priority</span></td>
+                                <td class="text-end">@b.SLATargetHours.ToString("N1")h</td>
+                                <td class="text-end fw-bold">@b.ActualHours.ToString("N1")h</td>
+                                <td class="text-end text-danger fw-bold">+@b.OverageHours.ToString("N1")h</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Backlog Aging -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Open Backlog — Aging</h6></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>WO #</th><th>Title</th><th>Asset</th><th>Priority</th><th class="text-end">Age (days)</th><th>Created</th></tr></thead>
+            <tbody>
+                @if (!Model.Backlog.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-3">No open backlog.</td></tr>
+                }
+                @foreach (var b in Model.Backlog)
+                {
+                    var ageBadge = b.AgeDays > 14 ? "bg-danger" : b.AgeDays > 7 ? "bg-warning text-dark" : "bg-secondary";
+                    <tr>
+                        <td><a asp-controller="WorkOrder" asp-action="Details" asp-route-id="@b.Id" class="text-decoration-none fw-bold">@b.WorkOrderNumber</a></td>
+                        <td>@b.Title</td>
+                        <td>@b.AssetCode</td>
+                        <td><span class="badge @(b.Priority == WorkOrderPriority.Critical ? "bg-danger" : b.Priority == WorkOrderPriority.High ? "bg-warning text-dark" : "bg-light text-dark border")">@b.PriorityDisplay</span></td>
+                        <td class="text-end"><span class="badge @ageBadge">@b.AgeDays days</span></td>
+                        <td><small>@b.CreatedDate.ToString("d")</small></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,72 @@
+@model InTagViewModelLayer.Maintenance.PMScheduleDetailVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div><h1><i class="bi bi-calendar-check me-2"></i>@Model.Name</h1><p class="text-muted mb-0">@Model.AssetCode — @Model.AssetName</p></div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Schedule Configuration</h6></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-4"><small class="text-muted d-block">Trigger</small><span class="badge bg-info">@Model.TriggerDisplay</span></div>
+                    <div class="col-sm-4"><small class="text-muted d-block">Frequency</small>@Model.FrequencyDisplay</div>
+                    <div class="col-sm-4"><small class="text-muted d-block">Status</small><span class="badge @(Model.IsEnabled ? "bg-success" : "bg-secondary")">@(Model.IsEnabled ? "Enabled" : "Disabled")</span></div>
+                    <div class="col-sm-4"><small class="text-muted d-block">Last Executed</small>@(Model.LastExecutedDate?.ToString("g") ?? "Never")</div>
+                    <div class="col-sm-4">
+                        <small class="text-muted d-block">Next Due</small>
+                        @if (Model.NextDueDate.HasValue)
+                        {
+                            if (Model.IsOverdue)
+                            {
+                                <span class="badge bg-danger">Overdue</span>
+                            }
+                            else
+                            {
+
+                                @Model.NextDueDate.Value.ToString("g")
+                            }
+                        }
+                    </div>
+                    <div class="col-sm-4"><small class="text-muted d-block">Work Orders Generated</small><strong>@Model.GeneratedWorkOrderCount</strong></div>
+                    @if (Model.TriggerType == PMTriggerType.MeterBased)
+                    {
+                        <div class="col-sm-4"><small class="text-muted d-block">Meter</small>@Model.MeterType — every @Model.MeterIntervalValue</div>
+                        <div class="col-sm-4"><small class="text-muted d-block">Last Reading</small>@Model.LastMeterReading</div>
+                        <div class="col-sm-4"><small class="text-muted d-block">Next Threshold</small>@Model.NextMeterThreshold</div>
+                        <hr />
+                        <a asp-action="MeterReading" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-speedometer me-1"></i>Record Meter Reading
+                        </a>
+                    }
+                  
+                    @if (Model.TriggerType == PMTriggerType.ConditionBased)
+                    {
+                        <div class="col-sm-4"><small class="text-muted d-block">Condition Trigger</small>≤ @Model.TriggerConditionThreshold</div>
+                    }
+                </div>
+                 
+                @if (!string.IsNullOrEmpty(Model.TaskDescription))
+                {
+                    <hr />
+                    <small class="text-muted d-block">Task Description</small>
+
+                    <p>@Model.TaskDescription</p>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Defaults</h6></div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2"><small class="text-muted">Priority</small><span class="badge bg-light text-dark border">@Model.DefaultPriority</span></div>
+                <div class="d-flex justify-content-between mb-2"><small class="text-muted">Est. Labor</small>@(Model.EstimatedLaborHours?.ToString("N1") ?? "—") hrs</div>
+                <div class="d-flex justify-content-between"><small class="text-muted">SLA Target</small>@(Model.SLATargetHours?.ToString("N1") ?? "—") hrs</div>
+            </div>
+        </div>
+    </div>
+</div>

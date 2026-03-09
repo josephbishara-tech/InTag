@@ -1,0 +1,253 @@
+@model InTagViewModelLayer.Manufacturing.ManufacturingDashboardVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-speedometer2 me-2"></i>Manufacturing Dashboard</h1>
+    <div class="dropdown">
+        <button class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-download me-1"></i>Export
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" asp-action="ExportProduction"><i class="bi bi-gear me-2"></i>Production Report</a></li>
+            <li><a class="dropdown-item" asp-action="ExportQuality"><i class="bi bi-clipboard-check me-2"></i>Quality Report</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- KPI Row 1 -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-primary bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width:44px;height:44px;">
+                    <i class="bi bi-gear-wide-connected fs-5 text-primary"></i>
+                </div>
+                <h3 class="fw-bold mb-0 text-primary">@Model.InProgressOrders</h3>
+                <small class="text-muted">In Progress</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-info bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width:44px;height:44px;">
+                    <i class="bi bi-play-circle fs-5 text-info"></i>
+                </div>
+                <h3 class="fw-bold mb-0 text-info">@Model.ReleasedOrders</h3>
+                <small class="text-muted">Released</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-success bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width:44px;height:44px;">
+                    <i class="bi bi-check-circle fs-5 text-success"></i>
+                </div>
+                <h3 class="fw-bold mb-0 text-success">@Model.CompletedOrdersThisMonth</h3>
+                <small class="text-muted">Completed (Month)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <small class="text-muted d-block mb-1">Average OEE</small>
+                <h3 class="fw-bold mb-0 @(Model.AverageOEE >= 85 ? "text-success" : Model.AverageOEE >= 60 ? "text-warning" : "text-danger")">@Model.AverageOEE%</h3>
+                <div class="progress mt-1" style="height:4px;"><div class="progress-bar @(Model.AverageOEE >= 85 ? "bg-success" : Model.AverageOEE >= 60 ? "bg-warning" : "bg-danger")" style="width:@Model.AverageOEE%"></div></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <small class="text-muted d-block mb-1">Quality Pass Rate</small>
+                <h3 class="fw-bold mb-0 @(Model.QualityPassRate >= 95 ? "text-success" : Model.QualityPassRate >= 85 ? "text-warning" : "text-danger")">@Model.QualityPassRate%</h3>
+                <small class="text-muted">@Model.QualityFailCount failures</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <small class="text-muted d-block mb-1">Scrap Rate</small>
+                <h3 class="fw-bold mb-0 @(Model.ScrapRate <= 2 ? "text-success" : Model.ScrapRate <= 5 ? "text-warning" : "text-danger")">@Model.ScrapRate%</h3>
+                <small class="text-muted">of total produced</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Alerts Tabs -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tab-overdue">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Overdue @if (Model.OverdueOrders.Any()) {
+                            <span class="badge bg-danger ms-1">@Model.OverdueOrders.Count</span>
+                                                        }
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-urgent">
+                            <i class="bi bi-lightning me-1"></i>Urgent @if (Model.UrgentOrders.Any()) {
+                            <span class="badge bg-warning text-dark ms-1">@Model.UrgentOrders.Count</span>
+                                                        }
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-quarantine">
+                            <i class="bi bi-shield-exclamation me-1"></i>Quarantined @if (Model.QuarantinedLots.Any()) {
+                            <span class="badge bg-danger ms-1">@Model.QuarantinedLots.Count</span>
+                                                        }
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body tab-content">
+                <div class="tab-pane active" id="tab-overdue">
+                    @if (!Model.OverdueOrders.Any())
+                    {
+                        <p class="text-muted text-center py-3">No overdue orders.</p>
+                    }
+                    @foreach (var o in Model.OverdueOrders)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div><a asp-controller="Production" asp-action="Details" asp-route-id="@o.Id" class="text-decoration-none fw-bold">@o.OrderNumber</a> <span class="text-muted ms-1">@o.ProductName</span></div>
+                            <span class="badge bg-danger">@o.DaysOverdue days overdue</span>
+                        </div>
+                    }
+                </div>
+                <div class="tab-pane" id="tab-urgent">
+                    @if (!Model.UrgentOrders.Any())
+                    {
+                        <p class="text-muted text-center py-3">No urgent orders.</p>
+                    }
+                    @foreach (var u in Model.UrgentOrders)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div><a asp-controller="Production" asp-action="Details" asp-route-id="@u.Id" class="text-decoration-none fw-bold">@u.OrderNumber</a> <span class="text-muted ms-1">@u.ProductName</span></div>
+                            <div><div class="progress" style="width:80px;height:6px;"><div class="progress-bar bg-warning" style="width:@u.CompletionPercent%"></div></div><small>@u.CompletionPercent%</small></div>
+                        </div>
+                    }
+                </div>
+                <div class="tab-pane" id="tab-quarantine">
+                    @if (!Model.QuarantinedLots.Any())
+                    {
+                        <p class="text-muted text-center py-3">No quarantined lots.</p>
+                    }
+                    @foreach (var l in Model.QuarantinedLots)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div><span class="fw-bold">@l.LotNumber</span> <span class="text-muted ms-1">@l.ProductName</span></div>
+                            <span class="badge bg-warning text-dark">@l.Quantity units</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Breakdown & Work Center Load -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Status</h6></div>
+            <div class="card-body">
+                @foreach (var s in Model.ByStatus)
+                {
+                    var color = s.Status switch { "InProgress" => "bg-primary", "Completed" => "bg-success", "Released" => "bg-info", "Cancelled" => "bg-danger", "Closed" => "bg-dark", _ => "bg-secondary" };
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><span class="badge @color me-1">&nbsp;</span> @s.Status</span>
+                        <span class="fw-bold">@s.Count <small class="text-muted">(@s.Percentage%)</small></span>
+                    </div>
+                    <div class="progress mb-3" style="height:4px;"><div class="progress-bar @color" style="width:@s.Percentage%"></div></div>
+                }
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent d-flex justify-content-between">
+                <h6 class="mb-0 fw-bold">Work Center Load</h6>
+                <a asp-controller="Production" asp-action="Capacity" class="small text-decoration-none">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach (var wc in Model.WorkCenterLoad.Take(5))
+                    {
+                        var wcColor = wc.Utilization > 100 ? "bg-danger" : wc.Utilization > 80 ? "bg-warning" : "bg-success";
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between small"><span class="fw-bold">@wc.Code</span><span>@wc.Utilization%</span></div>
+                            <div class="progress mt-1" style="height:4px;"><div class="progress-bar @wcColor" style="width:@Math.Min(100, (double)wc.Utilization)%"></div></div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Production by Product -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Production by Product</h6></div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Product</th><th class="text-end">Orders</th><th class="text-end">Planned</th><th class="text-end">Completed</th><th class="text-end">Scrap</th><th>Yield</th></tr></thead>
+                    <tbody>
+                        @foreach (var p in Model.ByProduct)
+                        {
+                            var yield = p.TotalPlanned > 0 ? (double)((p.TotalCompleted - p.TotalScrap) / p.TotalPlanned * 100) : 0;
+                            <tr>
+                                <td class="fw-bold">@p.ProductName</td>
+                                <td class="text-end">@p.OrderCount</td>
+                                <td class="text-end">@p.TotalPlanned.ToString("N0")</td>
+                                <td class="text-end text-success">@p.TotalCompleted.ToString("N0")</td>
+                                <td class="text-end text-danger">@p.TotalScrap.ToString("N0")</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div class="progress flex-grow-1" style="height:6px;"><div class="progress-bar @(yield >= 95 ? "bg-success" : yield >= 85 ? "bg-warning" : "bg-danger")" style="width:@yield%"></div></div>
+                                        <small>@yield.ToString("F0")%</small>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Recent Activity</h6></div>
+            <div class="card-body p-0">
+                @if (!Model.RecentActivity.Any())
+                {
+                    <p class="text-muted text-center py-3">No recent activity.</p>
+                }
+                @foreach (var a in Model.RecentActivity)
+                {
+                    <div class="d-flex align-items-start p-3 border-bottom">
+                        <i class="bi @a.Icon @(a.Icon.Contains("x-circle") ? "text-danger" : "text-primary") me-3 mt-1"></i>
+                        <div>
+                            @if (a.OrderId.HasValue)
+                            {
+                                <a asp-controller="Production" asp-action="Details" asp-route-id="@a.OrderId" class="text-decoration-none">@a.Description</a>
+                            }
+                            else
+                            {
+
+                                <span>@a.Description</span>
+                            }
+                            <br /><small class="text-muted">@a.Date.ToString("MMM d, h:mm tt")</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

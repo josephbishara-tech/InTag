@@ -1,0 +1,33 @@
+@model IReadOnlyList<InTagViewModelLayer.Manufacturing.BOMListItemVm>
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-diagram-2 me-2"></i>Bills of Material</h1>
+    <a asp-action="CreateBOM" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>New BOM</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>BOM Code</th><th>Product</th><th>Version</th><th>Status</th><th class="text-end">Components</th><th></th></tr></thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">No BOMs. <a asp-action="CreateBOM">Create one</a>.</td></tr>
+                }
+                @foreach (var b in Model)
+                {
+                    var badge = b.Status switch { BOMStatus.Active => "bg-success", BOMStatus.Obsolete => "bg-danger", _ => "bg-secondary" };
+                    <tr>
+                        <td><a asp-action="BOMDetail" asp-route-id="@b.Id" class="fw-bold text-decoration-none">@b.BOMCode</a></td>
+                        <td>@b.ProductName</td>
+                        <td><span class="badge bg-light text-dark">v@b.Version</span></td>
+                        <td><span class="badge @badge">@b.StatusDisplay</span></td>
+                        <td class="text-end">@b.LineCount</td>
+                        <td><a asp-action="BOMDetail" asp-route-id="@b.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,5 +1,10 @@
-﻿using InTagEntitiesLayer.Common;
+using InTagEntitiesLayer.Asset;
+using InTagEntitiesLayer.Common;
+using InTagEntitiesLayer.Document;
 using InTagEntitiesLayer.Interfaces;
+using InTagEntitiesLayer.Inventory;
+using InTagEntitiesLayer.Maintenance;
+using InTagEntitiesLayer.Manufacturing;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +25,49 @@ namespace InTagDataLayer.Context
 
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
+        // Asset Module
+        public DbSet<AssetItem> Assets => Set<AssetItem>();
+        public DbSet<AssetType> AssetTypes => Set<AssetType>();
+        public DbSet<DepreciationRecord> DepreciationRecords => Set<DepreciationRecord>();
+        public DbSet<AssetTransfer> AssetTransfers => Set<AssetTransfer>();
+        public DbSet<Inspection> Inspections => Set<Inspection>();
+        public DbSet<Location> Locations => Set<Location>();
+        public DbSet<Department> Departments => Set<Department>();
+        public DbSet<Vendor> Vendors => Set<Vendor>();
+
+        // Document Module
+        public DbSet<InTagEntitiesLayer.Document.Document> Documents => Set<InTagEntitiesLayer.Document.Document>();
+        public DbSet<DocumentRevision> DocumentRevisions => Set<DocumentRevision>();
+        public DbSet<DocumentFile> DocumentFiles => Set<DocumentFile>();
+        public DbSet<ApprovalMatrix> ApprovalMatrices => Set<ApprovalMatrix>();
+        public DbSet<DistributionRecord> DistributionRecords => Set<DistributionRecord>();
+
+        // Manufacturing Module
+        public DbSet<Product> Products => Set<Product>();
+        public DbSet<WorkCenter> WorkCenters => Set<WorkCenter>();
+        public DbSet<BillOfMaterial> BillOfMaterials => Set<BillOfMaterial>();
+        public DbSet<BOMLine> BOMLines => Set<BOMLine>();
+        public DbSet<Routing> Routings => Set<Routing>();
+        public DbSet<RoutingOperation> RoutingOperations => Set<RoutingOperation>();
+        public DbSet<ProductionOrder> ProductionOrders => Set<ProductionOrder>();
+        public DbSet<ProductionLog> ProductionLogs => Set<ProductionLog>();
+        public DbSet<LotBatch> LotBatches => Set<LotBatch>();
+        public DbSet<QualityCheck> QualityChecks => Set<QualityCheck>();
+
+        // Maintenance (CMMS) Module
+        public DbSet<WorkOrder> WorkOrders => Set<WorkOrder>();
+        public DbSet<WorkOrderLabor> WorkOrderLabors => Set<WorkOrderLabor>();
+        public DbSet<WorkOrderPart> WorkOrderParts => Set<WorkOrderPart>();
+        public DbSet<PMSchedule> PMSchedules => Set<PMSchedule>();
+        public DbSet<FailureLog> FailureLogs => Set<FailureLog>();
+
+        // Inventory Module
+        public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+        public DbSet<StorageBin> StorageBins => Set<StorageBin>();
+        public DbSet<StockItem> StockItems => Set<StockItem>();
+        public DbSet<InventoryTransaction> InventoryTransactions => Set<InventoryTransaction>();
+        public DbSet<CycleCount> CycleCounts => Set<CycleCount>();
+        public DbSet<CycleCountLine> CycleCountLines => Set<CycleCountLine>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,13 +93,14 @@ namespace InTagDataLayer.Context
         }
 
         private static void ApplyGlobalFilters<TEntity>(
-            ModelBuilder modelBuilder,
-            ITenantService tenantService)
-            where TEntity : BaseEntity
+     ModelBuilder modelBuilder,
+     ITenantService tenantService)
+     where TEntity : BaseEntity
         {
             modelBuilder.Entity<TEntity>().HasQueryFilter(
-                e => e.TenantId == tenantService.GetCurrentTenantId()
-                     && e.IsActive);
+                e => e.IsActive
+                     && (tenantService.GetCurrentTenantId() == Guid.Empty
+                         || e.TenantId == tenantService.GetCurrentTenantId()));
         }
 
         public override int SaveChanges()
@@ -70,8 +119,24 @@ namespace InTagDataLayer.Context
         {
             var entries = ChangeTracker.Entries<BaseEntity>();
             var now = DateTimeOffset.UtcNow;
-            var userId = _tenantService.GetCurrentUserId();
-            var tenantId = _tenantService.GetCurrentTenantId();
+
+            Guid userId;
+            Guid tenantId;
+
+            try
+            {
+                userId = _tenantService.GetCurrentUserId();
+                tenantId = _tenantService.GetCurrentTenantId();
+            }
+            catch
+            {
+                // System operation — no user/tenant context
+                return;
+            }
+
+            // Skip audit stamping for system operations (no tenant)
+            if (tenantId == Guid.Empty)
+                return;
 
             foreach (var entry in entries)
             {
@@ -87,7 +152,6 @@ namespace InTagDataLayer.Context
                     case EntityState.Modified:
                         entry.Entity.ModifiedDate = now;
                         entry.Entity.ModifiedByUserId = userId;
-                        // Prevent changing audit fields on update
                         entry.Property(e => e.CreatedDate).IsModified = false;
                         entry.Property(e => e.CreatedByUserId).IsModified = false;
                         entry.Property(e => e.TenantId).IsModified = false;

@@ -1,0 +1,229 @@
+@model InTagViewModelLayer.Maintenance.MaintenanceDashboardVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-speedometer2 me-2"></i>Maintenance Dashboard</h1>
+    <div class="dropdown">
+        <button class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-download me-1"></i>Export</button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" asp-action="ExportWorkOrders"><i class="bi bi-wrench me-2"></i>Work Order Report</a></li>
+            <li><a class="dropdown-item" asp-action="ExportPMCompliance"><i class="bi bi-calendar-check me-2"></i>PM Compliance</a></li>
+            <li><a class="dropdown-item" asp-action="ExportCosts"><i class="bi bi-cash-stack me-2"></i>Cost Report</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- KPI Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-primary bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width:44px;height:44px;"><i class="bi bi-wrench-adjustable fs-5 text-primary"></i></div>
+                <h3 class="fw-bold mb-0 text-primary">@Model.InProgressWorkOrders</h3><small class="text-muted">In Progress</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-info bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width:44px;height:44px;"><i class="bi bi-folder2-open fs-5 text-info"></i></div>
+                <h3 class="fw-bold mb-0 text-info">@Model.OpenWorkOrders</h3><small class="text-muted">Open</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-danger bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width:44px;height:44px;"><i class="bi bi-exclamation-triangle fs-5 text-danger"></i></div>
+                <h3 class="fw-bold mb-0 text-danger">@Model.OverdueWorkOrders</h3><small class="text-muted">Overdue</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <small class="text-muted d-block mb-1">PM Compliance</small>
+                <h3 class="fw-bold mb-0 @(Model.PMCompliancePercent >= 90 ? "text-success" : Model.PMCompliancePercent >= 70 ? "text-warning" : "text-danger")">@Model.PMCompliancePercent%</h3>
+                <div class="progress mt-1" style="height:4px;"><div class="progress-bar @(Model.PMCompliancePercent >= 90 ? "bg-success" : "bg-danger")" style="width:@Model.PMCompliancePercent%"></div></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <small class="text-muted d-block mb-1">SLA Compliance</small>
+                <h3 class="fw-bold mb-0 @(Model.SLACompliancePercent >= 90 ? "text-success" : "text-warning")">@Model.SLACompliancePercent%</h3>
+                <small class="text-muted">@Model.SLABreachedCount breached</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <small class="text-muted d-block mb-1">Cost (Month)</small>
+                <h3 class="fw-bold mb-0">@Model.TotalMaintenanceCostThisMonth.ToString("C0")</h3>
+                <small class="text-muted">@Model.CompletedThisMonth completed</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reliability mini -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Avg MTBF</small><h4 class="fw-bold mb-0">@Model.AvgMTBF.ToString("N0") hrs</h4></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Avg MTTR</small><h4 class="fw-bold mb-0">@Model.AvgMTTR.ToString("N1") hrs</h4></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">PM Schedules</small><h4 class="fw-bold mb-0">@Model.TotalPMSchedules</h4><small class="text-muted">@Model.PMsOverdueCount overdue</small></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">On Hold</small><h4 class="fw-bold text-warning mb-0">@Model.OnHoldWorkOrders</h4></div></div></div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Alerts Tabs -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-overdue"><i class="bi bi-exclamation-triangle me-1"></i>Overdue @if (Model.OverdueAlerts.Any()) {
+                    <span class="badge bg-danger ms-1">@Model.OverdueAlerts.Count</span>
+                                        }
+</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-pm"><i class="bi bi-calendar-check me-1"></i>PM Due @if (Model.PMDueAlerts.Any()) {
+                    <span class="badge bg-warning text-dark ms-1">@Model.PMDueAlerts.Count</span>
+                                        }
+</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-critical"><i class="bi bi-lightning me-1"></i>Critical @if (Model.CriticalAlerts.Any()) {
+                    <span class="badge bg-danger ms-1">@Model.CriticalAlerts.Count</span>
+                                        }
+</a></li>
+                </ul>
+            </div>
+            <div class="card-body tab-content">
+                <div class="tab-pane active" id="tab-overdue">
+                    @if (!Model.OverdueAlerts.Any())
+                    {
+                        <p class="text-muted text-center py-3">No overdue work orders.</p>
+                    }
+                    @foreach (var o in Model.OverdueAlerts)
+                    {
+                        var pBadge = o.Priority switch { WorkOrderPriority.Critical => "bg-danger", WorkOrderPriority.High => "bg-warning text-dark", _ => "bg-secondary" };
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div><a asp-controller="WorkOrder" asp-action="Details" asp-route-id="@o.Id" class="text-decoration-none fw-bold">@o.WorkOrderNumber</a> <span class="text-muted ms-1">@o.Title</span><br /><small class="text-muted">@o.AssetCode</small></div>
+                            <div class="text-end"><span class="badge @pBadge mb-1">@o.Priority</span><br /><span class="badge bg-danger">@o.DaysOverdue days</span></div>
+                        </div>
+                    }
+                </div>
+                <div class="tab-pane" id="tab-pm">
+                    @if (!Model.PMDueAlerts.Any())
+                    {
+                        <p class="text-muted text-center py-3">No PM schedules due.</p>
+                    }
+                    @foreach (var p in Model.PMDueAlerts)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div><a asp-controller="PMSchedule" asp-action="Details" asp-route-id="@p.ScheduleId" class="text-decoration-none fw-bold">@p.Name</a><br /><small class="text-muted">@p.AssetCode</small></div>
+                            <span class="badge @(p.IsOverdue ? "bg-danger" : p.DaysOverdueOrRemaining <= 3 ? "bg-warning text-dark" : "bg-secondary")">
+                                @(p.IsOverdue ? $"{p.DaysOverdueOrRemaining} days overdue" : $"{p.DaysOverdueOrRemaining} days")
+                            </span>
+                        </div>
+                    }
+                </div>
+                <div class="tab-pane" id="tab-critical">
+                    @if (!Model.CriticalAlerts.Any())
+                    {
+                        <p class="text-muted text-center py-3">No critical/emergency work orders.</p>
+                    }
+                    @foreach (var c in Model.CriticalAlerts)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div><a asp-controller="WorkOrder" asp-action="Details" asp-route-id="@c.Id" class="text-decoration-none fw-bold">@c.WorkOrderNumber</a> <span class="text-muted ms-1">@c.Title</span><br /><small class="text-muted">@c.AssetCode</small></div>
+                            <span class="badge bg-danger">@c.AgeDays day(s) old</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="col-lg-4">
+        <!-- By Status -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Status</h6></div>
+            <div class="card-body">
+                @foreach (var s in Model.ByStatus)
+                {
+                    var color = s.Status switch { "InProgress" => "bg-primary", "Completed" => "bg-success", "Open" => "bg-info", "OnHold" => "bg-warning", "Cancelled" => "bg-danger", "Closed" => "bg-dark", _ => "bg-secondary" };
+                    <div class="d-flex justify-content-between align-items-center mb-2"><span><span class="badge @color me-1">&nbsp;</span> @s.Status</span><span class="fw-bold">@s.Count</span></div>
+                    <div class="progress mb-3" style="height:4px;"><div class="progress-bar @color" style="width:@s.Percentage%"></div></div>
+                }
+            </div>
+        </div>
+
+        <!-- Top Cost Assets -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent d-flex justify-content-between">
+                <h6 class="mb-0 fw-bold">Top Cost Assets</h6>
+                <a asp-controller="PMSchedule" asp-action="CostByAsset" class="small text-decoration-none">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach (var c in Model.TopCostAssets)
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            <div><span class="fw-bold">@c.AssetCode</span><br /><small class="text-muted">@c.WOCount WOs</small></div>
+                            <span class="fw-bold text-primary">@c.TotalCost.ToString("C0")</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- By Type & Recent -->
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Work Order Type</h6></div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Type</th><th class="text-end">Count</th><th class="text-end">Total Cost</th></tr></thead>
+                    <tbody>
+                        @foreach (var t in Model.ByType)
+                        {
+                            <tr><td class="fw-bold">@t.Type</td><td class="text-end">@t.Count</td><td class="text-end">@t.TotalCost.ToString("C0")</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Recent Activity</h6></div>
+            <div class="card-body p-0">
+                @if (!Model.RecentActivity.Any())
+                {
+                    <p class="text-muted text-center py-3">No recent activity.</p>
+                }
+                @foreach (var a in Model.RecentActivity)
+                {
+                    <div class="d-flex align-items-start p-3 border-bottom">
+                        <i class="bi @a.Icon @(a.Icon.Contains("check") ? "text-success" : "text-primary") me-3 mt-1"></i>
+                        <div>
+                            @if (a.WorkOrderId.HasValue)
+                            {
+                                <a asp-controller="WorkOrder" asp-action="Details" asp-route-id="@a.WorkOrderId" class="text-decoration-none">@a.Description</a>
+                            }
+                            else
+                            {
+
+                                <span>@a.Description</span>
+                            }
+                            <br /><small class="text-muted">@a.Date.ToString("MMM d, h:mm tt")</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

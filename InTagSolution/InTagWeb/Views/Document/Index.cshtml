@@ -1,0 +1,200 @@
+@model InTagViewModelLayer.Document.DocumentListResultVm
+@using InTagEntitiesLayer.Enums
+@{
+    var filter = ViewBag.CurrentFilter as InTagViewModelLayer.Document.DocumentFilterVm;
+}
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-file-earmark-text me-2"></i>Documents</h1>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>New Document
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" asp-action="Index" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <input type="text" name="SearchTerm" value="@filter?.SearchTerm"
+                       class="form-control form-control-sm" placeholder="Search number, title, tags..." />
+            </div>
+            <div class="col-md-2">
+                <select name="Status" class="form-select form-select-sm" asp-items="ViewBag.Statuses">
+                    <option value="">All Statuses</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="Type" class="form-select form-select-sm" asp-items="ViewBag.Types">
+                    <option value="">All Types</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="DepartmentId" class="form-select form-select-sm" asp-items="ViewBag.Departments">
+                    <option value="">All Departments</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-search"></i></button>
+            </div>
+            <div class="col-md-1">
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary w-100">Clear</a>
+            </div>
+            <input type="hidden" name="Page" value="1" />
+            <input type="hidden" name="PageSize" value="@(filter?.PageSize ?? 25)" />
+        </form>
+    </div>
+</div>
+
+<!-- Results -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent">
+        <span class="small text-muted">@Model.TotalCount document(s) found</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>
+                        <a asp-action="Index" asp-route-SortBy="docnumber" asp-route-SortDescending="@(filter?.SortBy == "docnumber" && !filter.SortDescending)"
+                           asp-route-SearchTerm="@filter?.SearchTerm" asp-route-Status="@filter?.Status" asp-route-Type="@filter?.Type"
+                           class="text-decoration-none text-dark">
+                            Doc # <i class="bi bi-chevron-expand small"></i>
+                        </a>
+                    </th>
+                    <th>
+                        <a asp-action="Index" asp-route-SortBy="title" asp-route-SortDescending="@(filter?.SortBy == "title" && !filter.SortDescending)"
+                           asp-route-SearchTerm="@filter?.SearchTerm"
+                           class="text-decoration-none text-dark">
+                            Title <i class="bi bi-chevron-expand small"></i>
+                        </a>
+                    </th>
+                    <th>Type</th>
+                    <th>Version</th>
+                    <th>Status</th>
+                    <th>Review Due</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                            No documents found. <a asp-action="Create">Create one</a>.
+                        </td>
+                    </tr>
+                }
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@item.Id" class="fw-bold text-decoration-none">
+                                @item.DocNumber
+                            </a>
+                            @if (item.IsCheckedOut)
+                            {
+                                <i class="bi bi-lock-fill text-warning ms-1" title="Checked out"></i>
+                            }
+                        </td>
+                        <td>
+                            @item.Title
+                            @if (!string.IsNullOrEmpty(item.DepartmentName))
+                            {
+                                <br />
+                        
+                                <small class="text-muted">@item.DepartmentName</small>
+                            }
+                        </td>
+                        <td><span class="small">@item.TypeDisplay</span></td>
+                        <td><span class="badge bg-light text-dark">v @item.CurrentVersion</span></td>
+                        <td>
+                            @{
+                                var badgeClass = item.Status switch
+                                {
+                                    DocumentStatus.Published => "bg-success",
+                                    DocumentStatus.Draft => "bg-secondary",
+                                    DocumentStatus.InReview => "bg-info",
+                                    DocumentStatus.Approved => "bg-primary",
+                                    DocumentStatus.Obsolete => "bg-danger",
+                                    DocumentStatus.Archived => "bg-dark",
+                                    _ => "bg-secondary"
+                                };
+                            }
+                            <span class="badge @badgeClass">@item.StatusDisplay</span>
+                        </td>
+                        <td>
+                            @if (item.NextReviewDate.HasValue)
+                            {
+                                if (item.IsOverdueForReview)
+                                {
+                                    <span class="badge bg-danger">Overdue</span>
+                                }
+                                else
+                                {
+                                    <small>@item.NextReviewDate.Value.ToString("d")</small>
+                                }
+                            }
+                            else
+                            {
+                                <small class="text-muted">—</small>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (Model.TotalPages > 1)
+    {
+        <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+            <span class="small text-muted">Page @Model.Page of @Model.TotalPages</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    @if (Model.Page > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-Page="@(Model.Page - 1)" asp-route-PageSize="@Model.PageSize"
+                               asp-route-SearchTerm="@filter?.SearchTerm" asp-route-Status="@filter?.Status"
+                               asp-route-Type="@filter?.Type" asp-route-SortBy="@filter?.SortBy"
+                               asp-route-SortDescending="@filter?.SortDescending">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                        </li>
+                    }
+                    @for (var p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
+                    {
+                        <li class="page-item @(p == Model.Page ? "active" : "")">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-Page="@p" asp-route-PageSize="@Model.PageSize"
+                               asp-route-SearchTerm="@filter?.SearchTerm" asp-route-Status="@filter?.Status"
+                               asp-route-Type="@filter?.Type" asp-route-SortBy="@filter?.SortBy"
+                               asp-route-SortDescending="@filter?.SortDescending">@p</a>
+                        </li>
+                    }
+                    @if (Model.Page < Model.TotalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" asp-action="Index"
+                               asp-route-Page="@(Model.Page + 1)" asp-route-PageSize="@Model.PageSize"
+                               asp-route-SearchTerm="@filter?.SearchTerm" asp-route-Status="@filter?.Status"
+                               asp-route-Type="@filter?.Type" asp-route-SortBy="@filter?.SortBy"
+                               asp-route-SortDescending="@filter?.SortDescending">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    }
+</div>

@@ -1,0 +1,39 @@
+@model IReadOnlyList<InTagViewModelLayer.Manufacturing.WorkCenterCapacityVm>
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-bar-chart me-2"></i>Work Center Capacity</h1>
+    <form method="get" class="d-flex gap-2">
+        <select name="days" class="form-select form-select-sm" onchange="this.form.submit()" style="width:140px;">
+            @foreach (var d in new[] { 7, 14, 30, 60 })
+            {
+                <option value="@d" selected="@(ViewBag.Days == d)">Next @d days</option>
+            }
+        </select>
+    </form>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Work Center</th><th class="text-end">Capacity (hrs)</th><th class="text-end">Loaded (hrs)</th><th class="text-end">Available (hrs)</th><th>Utilization</th></tr></thead>
+            <tbody>
+                @foreach (var wc in Model)
+                {
+                    var barColor = wc.Utilization > 100 ? "bg-danger" : wc.Utilization > 80 ? "bg-warning" : wc.Utilization > 50 ? "bg-primary" : "bg-success";
+                    <tr class="@(wc.Utilization > 100 ? "table-danger" : "")">
+                        <td><strong>@wc.Code</strong> — @wc.Name</td>
+                        <td class="text-end">@wc.TotalCapacityHours.ToString("N0")</td>
+                        <td class="text-end">@wc.LoadedHours.ToString("N1")</td>
+                        <td class="text-end @(wc.AvailableHours < 0 ? "text-danger fw-bold" : "")">@wc.AvailableHours.ToString("N1")</td>
+                        <td style="width:200px;">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height:8px;"><div class="progress-bar @barColor" style="width:@Math.Min(100, (double)wc.Utilization)%"></div></div>
+                                <strong class="@(wc.Utilization > 100 ? "text-danger" : "")">@wc.Utilization%</strong>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

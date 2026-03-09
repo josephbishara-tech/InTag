@@ -1,0 +1,62 @@
+@model InTagViewModelLayer.Inventory.StockItemDetailVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div><h1><i class="bi bi-box me-2"></i>@Model.ProductCode</h1><p class="text-muted mb-0">@Model.ProductName  @Model.WarehouseName</p></div>
+    <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="row g-3 mb-3">
+            <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">On Hand</small><h3 class="fw-bold mb-0">@Model.QuantityOnHand.ToString("N2")</h3><small>@Model.UOM</small></div></div></div>
+            <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Reserved</small><h3 class="fw-bold text-warning mb-0">@Model.QuantityReserved.ToString("N2")</h3></div></div></div>
+            <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Available</small><h3 class="fw-bold text-success mb-0">@Model.QuantityAvailable.ToString("N2")</h3></div></div></div>
+            <div class="col-md-3"><div class="card border-0 shadow-sm text-center border-start border-primary border-4"><div class="card-body py-2"><small class="text-muted">Total Value</small><h3 class="fw-bold text-primary mb-0">@Model.TotalValue.ToString("C2")</h3></div></div></div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Details</h6></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-3"><small class="text-muted d-block">Warehouse</small><strong>@Model.WarehouseCode</strong> — @Model.WarehouseName</div>
+                    <div class="col-sm-3"><small class="text-muted d-block">Bin</small>@(Model.BinCode ?? "—")</div>
+                    <div class="col-sm-3"><small class="text-muted d-block">Unit Cost</small>@Model.UnitCost.ToString("C4")</div>
+                    <div class="col-sm-3"><small class="text-muted d-block">Valuation</small>@Model.ValuationMethod</div>
+                    @if (!string.IsNullOrEmpty(Model.LotNumber)) { <div class="col-sm-3"><small class="text-muted d-block">Lot #</small>@Model.LotNumber</div> }
+                    @if (!string.IsNullOrEmpty(Model.SerialNumber)) { <div class="col-sm-3"><small class="text-muted d-block">Serial #</small>@Model.SerialNumber</div> }
+                    @if (Model.ExpiryDate.HasValue) { <div class="col-sm-3"><small class="text-muted d-block">Expiry</small>@Model.ExpiryDate.Value.ToString("d")</div> }
+                    <div class="col-sm-3"><small class="text-muted d-block">Status</small>
+                        @{ var rBadge = Model.ReorderStatus switch { ReorderStatus.OutOfStock => "bg-danger", ReorderStatus.BelowMinimum => "bg-danger", ReorderStatus.BelowReorderPoint => "bg-warning text-dark", ReorderStatus.Overstock => "bg-info", _ => "bg-success" }; }
+                        <span class="badge @rBadge">@Model.ReorderStatus</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Reorder Levels</h6></div>
+            <div class="card-body">
+                <form asp-action="UpdateStockLevels" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="StockItemId" value="@Model.Id" />
+                    <div class="mb-2"><label class="form-label small">Minimum</label><input type="number" name="MinimumLevel" value="@Model.MinimumLevel" class="form-control form-control-sm" step="0.01" /></div>
+                    <div class="mb-2"><label class="form-label small">Maximum</label><input type="number" name="MaximumLevel" value="@Model.MaximumLevel" class="form-control form-control-sm" step="0.01" /></div>
+                    <div class="mb-2"><label class="form-label small">Reorder Point</label><input type="number" name="ReorderPoint" value="@Model.ReorderPoint" class="form-control form-control-sm" step="0.01" /></div>
+                    <div class="mb-3"><label class="form-label small">Reorder Qty</label><input type="number" name="ReorderQuantity" value="@Model.ReorderQuantity" class="form-control form-control-sm" step="0.01" /></div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-check-circle me-1"></i>Save Levels</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Quick Actions</h6></div>
+            <div class="card-body d-grid gap-2">
+                <a asp-action="RecordTransaction" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-circle me-1"></i>Record Transaction</a>
+                <a asp-action="Transactions" asp-route-ProductId="@Model.ProductId" class="btn btn-outline-info btn-sm"><i class="bi bi-clock-history me-1"></i>Transaction History</a>
+            </div>
+        </div>
+    </div>
+</div>

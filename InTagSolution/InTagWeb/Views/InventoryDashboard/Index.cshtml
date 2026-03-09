@@ -1,0 +1,182 @@
+@model InTagViewModelLayer.Inventory.InventoryDashboardVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-speedometer2 me-2"></i>Inventory Dashboard</h1>
+    <div class="dropdown">
+        <button class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="bi bi-download me-1"></i>Export</button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" asp-action="ExportStock"><i class="bi bi-boxes me-2"></i>Stock Report</a></li>
+            <li><a class="dropdown-item" asp-action="ExportTransactions"><i class="bi bi-arrow-left-right me-2"></i>Transaction Report</a></li>
+            <li><a class="dropdown-item" asp-action="ExportValuation"><i class="bi bi-currency-dollar me-2"></i>Valuation Report</a></li>
+        </ul>
+    </div>
+</div>
+
+<!-- KPI Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-primary bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width:44px;height:44px;"><i class="bi bi-currency-dollar fs-5 text-primary"></i></div>
+                <h3 class="fw-bold text-primary mb-0">@Model.TotalInventoryValue.ToString("C0")</h3><small class="text-muted">Total Value</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-success bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width:44px;height:44px;"><i class="bi bi-boxes fs-5 text-success"></i></div>
+                <h3 class="fw-bold mb-0">@Model.TotalSKUs</h3><small class="text-muted">Active SKUs</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <small class="text-muted d-block mb-1">Turnover</small>
+                <h3 class="fw-bold mb-0">@Model.TurnoverRatio×</h3>
+                <small class="text-muted">annual</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-danger bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width:44px;height:44px;"><i class="bi bi-exclamation-triangle fs-5 text-danger"></i></div>
+                <h3 class="fw-bold text-danger mb-0">@Model.OutOfStockCount</h3><small class="text-muted">Out of Stock</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-warning bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width:44px;height:44px;"><i class="bi bi-calendar-x fs-5 text-warning"></i></div>
+                <h3 class="fw-bold text-warning mb-0">@(Model.ExpiredCount + Model.ExpiringSoonCount)</h3><small class="text-muted">Expiry Risk</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <small class="text-muted d-block mb-1">TXNs (Month)</small>
+                <h3 class="fw-bold mb-0">@Model.TransactionsThisMonth</h3>
+                <small class="text-muted">@Model.WarehouseCount warehouses</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Alerts -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-stock"><i class="bi bi-exclamation-diamond me-1"></i>Stock Alerts @if (Model.StockAlerts.Any()) {
+                    <span class="badge bg-danger ms-1">@Model.StockAlerts.Count</span>
+                                        }
+</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-expiry"><i class="bi bi-calendar-x me-1"></i>Expiry @if (Model.ExpiryAlerts.Any()) {
+                    <span class="badge bg-warning text-dark ms-1">@Model.ExpiryAlerts.Count</span>
+                                        }
+</a></li>
+                </ul>
+            </div>
+            <div class="card-body tab-content">
+                <div class="tab-pane active" id="tab-stock">
+                    @if (!Model.StockAlerts.Any())
+                    {
+                        <p class="text-muted text-center py-3">All stock levels healthy.</p>
+                    }
+                    @foreach (var a in Model.StockAlerts)
+                    {
+                        var sBadge = a.Status switch { ReorderStatus.OutOfStock => "bg-danger", ReorderStatus.BelowMinimum => "bg-danger", _ => "bg-warning text-dark" };
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div><a asp-controller="Inventory" asp-action="Index" asp-route-SearchTerm="@a.ProductCode" class="text-decoration-none fw-bold">@a.ProductCode</a> <span class="text-muted ms-1">@a.ProductName</span><br /><small class="text-muted">@a.WarehouseCode — Qty: @a.QuantityOnHand</small></div>
+                            <span class="badge @sBadge">@a.StatusDisplay</span>
+                        </div>
+                    }
+                </div>
+                <div class="tab-pane" id="tab-expiry">
+                    @if (!Model.ExpiryAlerts.Any())
+                    {
+                        <p class="text-muted text-center py-3">No expiry concerns.</p>
+                    }
+                    @foreach (var e in Model.ExpiryAlerts)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div><span class="fw-bold">@e.ProductCode</span> <span class="text-muted">@e.ProductName</span>@if (!string.IsNullOrEmpty(e.LotNumber)) {
+                            <small class="badge bg-light text-dark border ms-1">@e.LotNumber</small>
+                        }
+<br /><small class="text-muted">@e.Quantity units — expires @e.ExpiryDate.ToString("d")</small></div>
+                        <span class="badge @(e.IsExpired ? "bg-danger" : "bg-warning text-dark")">@(e.IsExpired ? "Expired" : $"{e.DaysRemaining} days")</span>
+                    </div>
+                                        }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Value by Warehouse</h6></div>
+            <div class="card-body">
+                @foreach (var w in Model.ByWarehouse)
+                {
+                    <div class="d-flex justify-content-between mb-1"><span class="fw-bold">@w.Code</span><span>@w.Value.ToString("C0")</span></div>
+                    <div class="progress mb-3" style="height:6px;"><div class="progress-bar bg-primary" style="width:@w.Percentage%"></div></div>
+                }
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Top Value Items</h6></div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach (var t in Model.TopValueItems)
+                    {
+                        <li class="list-group-item d-flex justify-content-between"><div><strong>@t.ProductCode</strong><br /><small class="text-muted">@t.Quantity units</small></div><span class="fw-bold text-primary">@t.TotalValue.ToString("C0")</span></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Transaction summary -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Transactions This Month</h6></div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Type</th><th class="text-end">Count</th><th class="text-end">Qty</th><th class="text-end">Value</th></tr></thead>
+                    <tbody>
+                        @foreach (var t in Model.TransactionSummary)
+                        {
+                            <tr><td class="fw-bold">@t.Type</td><td class="text-end">@t.Count</td><td class="text-end">@t.TotalQuantity.ToString("N0")</td><td class="text-end">@t.TotalValue.ToString("C0")</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Recent Activity</h6></div>
+            <div class="card-body p-0">
+                @foreach (var a in Model.RecentTransactions)
+                {
+                    <div class="d-flex align-items-start p-3 border-bottom">
+                        <i class="bi @a.Icon text-primary me-3 mt-1"></i>
+                        <div><span>@a.Description</span><br /><small class="text-muted">@a.Date.ToString("MMM d, h:mm tt")</small></div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

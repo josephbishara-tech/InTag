@@ -1,0 +1,93 @@
+@model InTagViewModelLayer.Manufacturing.BOMExplosionResultVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-diagram-3 me-2"></i>BOM Explosion</h1>
+        <p class="text-muted mb-0">@Model.BOMCode — @Model.ProductName</p>
+    </div>
+    <a asp-action="BOMDetail" asp-route-id="@ViewBag.BOMId" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="d-flex gap-2 align-items-end">
+            <div>
+                <label class="form-label small">Order Quantity</label>
+                <input type="number" name="qty" value="@Model.OrderQuantity" class="form-control form-control-sm" step="0.01" style="width:140px;" />
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">Explode</button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Components</small><h4 class="fw-bold mb-0">@Model.UniqueComponents</h4></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">BOM Depth</small><h4 class="fw-bold mb-0">@Model.MaxDepth level(s)</h4></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Order Qty</small><h4 class="fw-bold mb-0">@Model.OrderQuantity</h4></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Total Cost</small><h4 class="fw-bold mb-0 text-primary">@Model.TotalMaterialCost.ToString("C2")</h4></div></div></div>
+</div>
+
+<!-- Tree View -->
+@if (Model.Tree.Any())
+{
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">BOM Structure</h6></div>
+        <div class="card-body">
+            @{
+                void RenderTree(IReadOnlyList<InTagViewModelLayer.Manufacturing.BOMExplosionNodeVm> nodes)
+                {
+                    <ul class="list-unstyled ms-3">
+                        @foreach (var node in nodes)
+                        {
+                            <li class="mb-1">
+                                <span class="badge bg-light text-dark border me-1">L@node.Level</span>
+                                <strong>@node.ProductCode</strong> — @node.ProductName
+                                @if (node.IsPhantom)
+                                {
+                                    <span class="badge bg-info">Phantom</span>
+                                }
+                                <span class="text-muted ms-2">@node.Quantity.ToString("N2") @node.UOM</span>
+                                @if (node.Children.Any()) { RenderTree(node.Children); }
+                            </li>
+                        }
+                    </ul>
+                }
+                RenderTree(Model.Tree);
+
+            }
+        </div>
+    </div>
+}
+
+<!-- Flat Requirements -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Consolidated Material Requirements</h6></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Code</th><th>Component</th><th>Type</th><th class="text-end">Net Qty</th><th class="text-end">With Scrap</th><th>UOM</th><th class="text-end">Unit Cost</th><th class="text-end">Total</th></tr></thead>
+            <tbody>
+                @foreach (var line in Model.FlatRequirements)
+                {
+                    <tr>
+                        <td class="fw-bold">@line.ProductCode</td>
+                        <td>@line.ProductName</td>
+                        <td>@if (line.IsRawMaterial) {
+                        <span class="badge bg-secondary">Raw</span>
+                    } else
+                    {
+
+                        <span class="badge bg-outline-dark border">Semi</span>
+                    }
+</td>
+                    <td class="text-end">@line.TotalQuantity.ToString("N2")</td>
+                    <td class="text-end">@line.TotalQuantityWithScrap.ToString("N2")</td>
+                    <td>@line.UOM</td>
+                    <td class="text-end">@line.UnitCost.ToString("C2")</td>
+                    <td class="text-end fw-bold">@line.TotalCost.ToString("C2")</td>
+                </tr>
+                                }
+            </tbody>
+            <tfoot class="table-light"><tr class="fw-bold"><td colspan="7">Total Material Cost</td><td class="text-end">@Model.TotalMaterialCost.ToString("C2")</td></tr></tfoot>
+        </table>
+    </div>
+</div>

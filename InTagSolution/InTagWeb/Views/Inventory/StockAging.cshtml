@@ -1,0 +1,50 @@
+@model InTagViewModelLayer.Inventory.StockAgingVm
+
+<div class="content-header"><h1><i class="bi bi-hourglass-split me-2"></i>Stock Aging</h1></div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Total Stock Value</small><h3 class="fw-bold text-primary mb-0">@Model.TotalValue.ToString("C0")</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Slow-Moving (>90 days)</small><h3 class="fw-bold text-warning mb-0">@Model.SlowMovingValue.ToString("C0")</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Slow-Moving %</small><h3 class="fw-bold @(Model.SlowMovingPercent > 30 ? "text-danger" : Model.SlowMovingPercent > 15 ? "text-warning" : "text-success") mb-0">@Model.SlowMovingPercent%</h3></div></div></div>
+</div>
+
+<!-- Buckets -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Aging Distribution</h6></div>
+    <div class="card-body">
+        @foreach (var b in Model.Buckets)
+        {
+            var color = b.Label.StartsWith("0") ? "bg-success" : b.Label.StartsWith("31") ? "bg-success" : b.Label.StartsWith("61") ? "bg-info" : b.Label.StartsWith("91") ? "bg-warning" : b.Label.StartsWith("181") ? "bg-danger" : "bg-dark";
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span><span class="badge @color me-2" style="width:100px;">@b.Label</span>@b.SKUs SKUs</span>
+                <span class="fw-bold">@b.TotalValue.ToString("C0") <small class="text-muted">(@b.Percentage%)</small></span>
+            </div>
+            <div class="progress mb-3" style="height:8px;"><div class="progress-bar @color" style="width:@b.Percentage%"></div></div>
+        }
+    </div>
+</div>
+
+<!-- Slow-moving items -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Items by Age (oldest first)</h6></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Product</th><th>Warehouse</th><th class="text-end">Qty</th><th class="text-end">Value</th><th class="text-end">Days Idle</th><th>Last Movement</th><th>Bucket</th></tr></thead>
+            <tbody>
+                @foreach (var item in Model.Items.Take(50))
+                {
+                    var rowClass = item.DaysSinceLastMovement > 365 ? "table-danger" : item.DaysSinceLastMovement > 90 ? "table-warning" : "";
+                    <tr class="@rowClass">
+                        <td><strong>@item.ProductCode</strong><br /><small class="text-muted">@item.ProductName</small></td>
+                        <td>@item.WarehouseCode</td>
+                        <td class="text-end">@item.QuantityOnHand.ToString("N2")</td>
+                        <td class="text-end">@item.TotalValue.ToString("C2")</td>
+                        <td class="text-end fw-bold">@item.DaysSinceLastMovement</td>
+                        <td><small>@item.LastMovementDate?.ToString("d")</small></td>
+                        <td><small>@item.AgingBucket</small></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,91 @@
+@model InTagViewModelLayer.Document.DocumentCreateVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-plus-circle me-2"></i>New Document</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <h6 class="fw-bold mb-3 text-primary">Document Details</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-8">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DocNumberOverride" class="form-label"></label>
+                    <input asp-for="DocNumberOverride" class="form-control" placeholder="Auto-generated if blank" />
+                    <small class="text-muted">Leave empty to auto-generate</small>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Type" class="form-label"></label>
+                    <select asp-for="Type" asp-items="ViewBag.Types" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Category" class="form-label"></label>
+                    <select asp-for="Category" asp-items="ViewBag.Categories" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DepartmentId" class="form-label">Department</label>
+                    <select asp-for="DepartmentId" asp-items="ViewBag.Departments" class="form-select">
+                        <option value="">— None —</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+
+            <h6 class="fw-bold mb-3 text-primary">Compliance & Review</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <label asp-for="ReviewCycle" class="form-label"></label>
+                    <select asp-for="ReviewCycle" asp-items="ViewBag.ReviewCycles" class="form-select"></select>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="IsoReference" class="form-label"></label>
+                    <input asp-for="IsoReference" class="form-control" placeholder="e.g. ISO 9001:7.5" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="ConfidentialityLevel" class="form-label"></label>
+                    <select asp-for="ConfidentialityLevel" class="form-select">
+                        <option value="">— Select —</option>
+                        <option>Public</option>
+                        <option>Internal</option>
+                        <option>Confidential</option>
+                        <option>Restricted</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Tags" class="form-label"></label>
+                    <input asp-for="Tags" class="form-control" placeholder="quality, safety, ..." />
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label asp-for="Notes" class="form-label"></label>
+                <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>Create Document
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

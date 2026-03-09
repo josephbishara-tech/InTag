@@ -1,0 +1,306 @@
+@model InTagViewModelLayer.Document.DocumentDashboardVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-speedometer2 me-2"></i>Document Dashboard</h1>
+    <div class="dropdown">
+        <button class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-download me-1"></i>Export
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+                <a class="dropdown-item" asp-action="ExportRegister">
+                    <i class="bi bi-table me-2"></i>Document Register (Excel)
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" asp-action="ExportCompliance">
+                    <i class="bi bi-shield-check me-2"></i>Compliance Report (Excel)
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-primary bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 44px; height: 44px;">
+                    <i class="bi bi-file-earmark-text fs-5 text-primary"></i>
+                </div>
+                <h3 class="fw-bold mb-0">@Model.TotalDocuments</h3>
+                <small class="text-muted">Total</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-success bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 44px; height: 44px;">
+                    <i class="bi bi-globe fs-5 text-success"></i>
+                </div>
+                <h3 class="fw-bold mb-0 text-success">@Model.PublishedDocuments</h3>
+                <small class="text-muted">Published</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-info bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 44px; height: 44px;">
+                    <i class="bi bi-hourglass-split fs-5 text-info"></i>
+                </div>
+                <h3 class="fw-bold mb-0 text-info">@Model.PendingApprovalCount</h3>
+                <small class="text-muted">Pending Approval</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-danger bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 44px; height: 44px;">
+                    <i class="bi bi-exclamation-triangle fs-5 text-danger"></i>
+                </div>
+                <h3 class="fw-bold mb-0 text-danger">@Model.OverdueReviewCount</h3>
+                <small class="text-muted">Overdue Reviews</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-warning bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 44px; height: 44px;">
+                    <i class="bi bi-lock fs-5 text-warning"></i>
+                </div>
+                <h3 class="fw-bold mb-0 text-warning">@Model.CheckedOutDocuments</h3>
+                <small class="text-muted">Checked Out</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <small class="text-muted d-block mb-1">Review Compliance</small>
+                <h3 class="fw-bold mb-0 @(Model.ReviewCompliancePercent >= 90 ? "text-success" : Model.ReviewCompliancePercent >= 70 ? "text-warning" : "text-danger")">
+                    @Model.ReviewCompliancePercent%
+                </h3>
+                <div class="progress mt-1" style="height: 4px;">
+                    <div class="progress-bar @(Model.ReviewCompliancePercent >= 90 ? "bg-success" : Model.ReviewCompliancePercent >= 70 ? "bg-warning" : "bg-danger")"
+                         style="width: @Model.ReviewCompliancePercent%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Alerts Tabs -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tab-overdue">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Overdue
+                            @if (Model.OverdueReviews.Any())
+                            {
+                                <span class="badge bg-danger ms-1">@Model.OverdueReviews.Count</span>
+                            }
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-upcoming">
+                            <i class="bi bi-calendar-event me-1"></i>Upcoming
+                            @if (Model.UpcomingReviews.Any())
+                            {
+                                <span class="badge bg-warning text-dark ms-1">@Model.UpcomingReviews.Count</span>
+                            }
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-approvals">
+                            <i class="bi bi-check-square me-1"></i>Approvals
+                            @if (Model.PendingApprovals.Any())
+                            {
+                                <span class="badge bg-info ms-1">@Model.PendingApprovals.Count</span>
+                            }
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-checkout">
+                            <i class="bi bi-lock me-1"></i>Checked Out
+                            @if (Model.CheckedOutDocs.Any())
+                            {
+                                <span class="badge bg-secondary ms-1">@Model.CheckedOutDocs.Count</span>
+                            }
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body tab-content">
+                <!-- Overdue Reviews -->
+                <div class="tab-pane active" id="tab-overdue">
+                    @if (!Model.OverdueReviews.Any())
+                    {
+                        <p class="text-muted text-center py-3">No overdue reviews. Excellent compliance!</p>
+                    }
+                    @foreach (var r in Model.OverdueReviews)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <a asp-controller="Document" asp-action="Details" asp-route-id="@r.DocumentId"
+                                   class="text-decoration-none fw-bold">@r.DocNumber</a>
+                                <span class="text-muted ms-1">@r.Title</span>
+                            </div>
+                            <span class="badge bg-danger">@r.DaysOverdueOrRemaining days overdue</span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Upcoming Reviews -->
+                <div class="tab-pane" id="tab-upcoming">
+                    @if (!Model.UpcomingReviews.Any())
+                    {
+                        <p class="text-muted text-center py-3">No reviews due in the next 30 days.</p>
+                    }
+                    @foreach (var r in Model.UpcomingReviews)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <a asp-controller="Document" asp-action="Details" asp-route-id="@r.DocumentId"
+                                   class="text-decoration-none fw-bold">@r.DocNumber</a>
+                                <span class="text-muted ms-1">@r.Title</span>
+                            </div>
+                            <span class="badge @(r.DaysOverdueOrRemaining <= 7 ? "bg-warning text-dark" : "bg-secondary")">
+                                @r.DaysOverdueOrRemaining days
+                            </span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Pending Approvals -->
+                <div class="tab-pane" id="tab-approvals">
+                    @if (!Model.PendingApprovals.Any())
+                    {
+                        <p class="text-muted text-center py-3">No pending approvals.</p>
+                    }
+                    @foreach (var p in Model.PendingApprovals)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <a asp-controller="Document" asp-action="Details" asp-route-id="@p.DocumentId"
+                                   class="text-decoration-none fw-bold">@p.DocNumber</a>
+                                <span class="text-muted ms-1">@p.Title</span>
+                                <span class="badge bg-light text-dark ms-1">v@p.RevisionNumber</span>
+                            </div>
+                            <span class="badge @(p.DaysPending > 3 ? "bg-danger" : "bg-secondary")">
+                                @p.DaysPending day(s)
+                            </span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Checked Out -->
+                <div class="tab-pane" id="tab-checkout">
+                    @if (!Model.CheckedOutDocs.Any())
+                    {
+                        <p class="text-muted text-center py-3">No documents currently checked out.</p>
+                    }
+                    @foreach (var c in Model.CheckedOutDocs)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <a asp-controller="Document" asp-action="Details" asp-route-id="@c.DocumentId"
+                                   class="text-decoration-none fw-bold">@c.DocNumber</a>
+                                <span class="text-muted ms-1">@c.Title</span>
+                            </div>
+                            <span class="badge @(c.DaysCheckedOut > 5 ? "bg-warning text-dark" : "bg-secondary")">
+                                @c.DaysCheckedOut day(s)
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+        <!-- By Status -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Status</h6></div>
+            <div class="card-body">
+                @foreach (var s in Model.ByStatus)
+                {
+                    var color = s.Status switch
+                    {
+                                "Published" => "bg-success",
+                                "Draft" => "bg-secondary",
+                                "InReview" => "bg-info",
+                                "Approved" => "bg-primary",
+                                "Obsolete" => "bg-danger",
+                                "Archived" => "bg-dark",
+                        _ => "bg-secondary"
+                    };
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><span class="badge @color me-1">&nbsp;</span> @s.Status</span>
+                        <span class="fw-bold">@s.Count <small class="text-muted">(@s.Percentage%)</small></span>
+                    </div>
+                    <div class="progress mb-3" style="height: 4px;">
+                        <div class="progress-bar @color" style="width: @s.Percentage%"></div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- By Type -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Type</h6></div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach (var t in Model.ByType)
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            <div>
+                                <span class="fw-bold">@t.Type</span>
+                                <br /><small class="text-muted">@t.PublishedCount published</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill align-self-center">@t.Count</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Recent Activity</h6></div>
+    <div class="card-body p-0">
+        @if (!Model.RecentActivity.Any())
+        {
+            <p class="text-muted text-center py-3">No recent activity.</p>
+        }
+        @foreach (var a in Model.RecentActivity)
+        {
+            <div class="d-flex align-items-start p-3 border-bottom">
+                <i class="bi @a.Icon text-primary me-3 mt-1"></i>
+                <div>
+                    @if (a.DocumentId.HasValue)
+                    {
+                        <a asp-controller="Document" asp-action="Details" asp-route-id="@a.DocumentId"
+                           class="text-decoration-none">@a.Description</a>
+                    }
+                    else
+                    {
+
+                        <span>@a.Description</span>
+                    }
+                    <br /><small class="text-muted">@a.Date.ToString("MMM d, h:mm tt")</small>
+                </div>
+            </div>
+        }
+    </div>
+</div>

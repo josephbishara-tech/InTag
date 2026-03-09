@@ -1,0 +1,96 @@
+@model InTagViewModelLayer.Manufacturing.BOMDetailVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-diagram-2 me-2"></i>@Model.BOMCode</h1>
+        <p class="text-muted mb-0">@Model.ProductCode — @Model.ProductName (v@Model.Version)</p>
+    </div>
+    <div class="d-flex gap-2">
+        @if (Model.Status == BOMStatus.Draft)
+        {
+            <form asp-action="ActivateBOM" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-circle me-1"></i>Activate</button>
+            </form>
+        }
+        <a asp-action="BOMExplosion" asp-route-id="@Model.Id" asp-route-qty="1" class="btn btn-outline-info btn-sm">
+            <i class="bi bi-diagram-3 me-1"></i>Explode BOM
+        </a>
+        <a asp-action="BOMs" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+    </div>
+
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent d-flex justify-content-between">
+                <h6 class="mb-0 fw-bold">Components (@Model.Lines.Count)</h6>
+                <span class="fw-bold">Total: @Model.TotalMaterialCost.ToString("C2")</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Component</th><th>Name</th><th class="text-end">Qty</th><th>UOM</th><th class="text-end">Scrap %</th><th class="text-end">Cost</th><th></th></tr></thead>
+                    <tbody>
+                        @foreach (var line in Model.Lines)
+                        {
+                            <tr>
+                                <td class="fw-bold">@line.ComponentCode</td>
+                                <td>@line.ComponentName @if (line.IsPhantom) {
+                                <span class="badge bg-info">Phantom</span>
+                            }
+                            </td>
+                            <td class="text-end">@line.Quantity</td>
+                            <td>@line.UOM</td>
+                            <td class="text-end">@line.ScrapFactor%</td>
+                            <td class="text-end">@line.LineCost.ToString("C2")</td>
+                            <td>
+                                @if (Model.Status == BOMStatus.Draft)
+                                {
+                                    <form asp-action="RemoveBOMLine" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="lineId" value="@line.Id" /><input type="hidden" name="bomId" value="@Model.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                                                }
+                    </tbody>
+                </table>
+            </div>
+            @if (Model.Status == BOMStatus.Draft)
+            {
+                <div class="card-body border-top">
+                    <form asp-action="AddBOMLine" method="post" class="row g-2 align-items-end">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="BOMId" value="@Model.Id" />
+                        <div class="col-md-3"><label class="form-label small">Component</label><select name="ComponentProductId" class="form-select form-select-sm" asp-items="ViewBag.Components"><option value="">—</option></select></div>
+                        <div class="col-md-2"><label class="form-label small">Qty</label><input type="number" name="Quantity" class="form-control form-control-sm" step="0.01" required /></div>
+                        <div class="col-md-2"><label class="form-label small">UOM</label><select name="UOM" class="form-select form-select-sm" asp-items="ViewBag.UOMs"></select></div>
+                        <div class="col-md-2"><label class="form-label small">Scrap %</label><input type="number" name="ScrapFactor" class="form-control form-control-sm" step="0.1" value="0" /></div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus me-1"></i>Add</button></div>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">BOM Info</h6></div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <small class="text-muted">Status</small>
+                    @{
+                        var bomBadge = Model.Status switch { BOMStatus.Active => "bg-success", BOMStatus.Obsolete => "bg-danger", _ => "bg-secondary" };
+                    }
+                    <span class="badge @bomBadge">@Model.StatusDisplay</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2"><small class="text-muted">Output Qty</small><span>@Model.OutputQuantity</span></div>
+                <div class="d-flex justify-content-between mb-2"><small class="text-muted">Effective</small><span>@(Model.EffectiveDate?.ToString("d") ?? "—")</span></div>
+            </div>
+        </div>
+    </div>
+</div>

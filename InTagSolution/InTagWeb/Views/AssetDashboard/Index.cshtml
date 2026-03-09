@@ -1,0 +1,287 @@
+@model InTagViewModelLayer.Asset.AssetDashboardVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-speedometer2 me-2"></i>Asset Dashboard</h1>
+    <div class="dropdown">
+        <button class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-download me-1"></i>Export
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+                <a class="dropdown-item" asp-action="ExportRegister">
+                    <i class="bi bi-table me-2"></i>Asset Register (Excel)
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" asp-action="ExportDepreciation" asp-route-year="@DateTime.Now.Year">
+                    <i class="bi bi-graph-down me-2"></i>Depreciation Schedule (Excel)
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" asp-action="ExportTCO">
+                    <i class="bi bi-calculator me-2"></i>TCO Analysis (Excel)
+                </a>
+            </li>
+        </ul>
+    </div>
+</div>
+
+<!-- KPI Row -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-primary bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                    <i class="bi bi-building-gear fs-4 text-primary"></i>
+                </div>
+                <h3 class="fw-bold mb-0">@Model.TotalAssets</h3>
+                <small class="text-muted">Total Assets</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-success bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                    <i class="bi bi-check-circle fs-4 text-success"></i>
+                </div>
+                <h3 class="fw-bold mb-0 text-success">@Model.OperationalAssets</h3>
+                <small class="text-muted">Operational</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-2">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <div class="bg-warning bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
+                    <i class="bi bi-wrench fs-4 text-warning"></i>
+                </div>
+                <h3 class="fw-bold mb-0 text-warning">@Model.UnderMaintenanceAssets</h3>
+                <small class="text-muted">Under Maintenance</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <small class="text-muted d-block">Total Asset Value</small>
+                <h4 class="fw-bold mb-0">@Model.TotalAssetValue.ToString("C0")</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-3">
+                <small class="text-muted d-block">Current Book Value</small>
+                <h4 class="fw-bold mb-0 text-primary">@Model.TotalBookValue.ToString("C0")</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Status Breakdown -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Status</h6></div>
+            <div class="card-body">
+                @foreach (var s in Model.ByStatus)
+                {
+                    var color = s.Status switch
+                    {
+                                "Operational" => "bg-success",
+                                "Draft" => "bg-secondary",
+                                "UnderMaintenance" => "bg-warning",
+                                "Decommissioned" => "bg-danger",
+                        _ => "bg-info"
+                    };
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><span class="badge @color me-1">&nbsp;</span> @s.Status</span>
+                        <span class="fw-bold">@s.Count <small class="text-muted">(@s.Percentage%)</small></span>
+                    </div>
+                    <div class="progress mb-3" style="height: 4px;">
+                        <div class="progress-bar @color" style="width: @s.Percentage%"></div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- By Category -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Category</h6></div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach (var c in Model.ByCategory)
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            <div>
+                                <span class="fw-bold">@c.Category</span>
+                                <br /><small class="text-muted">@c.Count assets</small>
+                            </div>
+                            <span class="text-end">
+                                <span class="fw-bold">@c.TotalValue.ToString("C0")</span>
+                                <br /><small class="text-muted">book value</small>
+                            </span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- By Location -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Location</h6></div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @if (!Model.ByLocation.Any())
+                    {
+                        <li class="list-group-item text-muted text-center">No location data</li>
+                    }
+                    @foreach (var l in Model.ByLocation.Take(8))
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>@l.Location <span class="badge bg-secondary ms-1">@l.Count</span></span>
+                            <span class="fw-bold">@l.TotalValue.ToString("C0")</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Alerts -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#tab-warranty">
+                            <i class="bi bi-shield-exclamation me-1"></i>Warranty
+                            @if (Model.WarrantyAlerts.Any())
+                            {
+                                <span class="badge bg-danger ms-1">@Model.WarrantyAlerts.Count</span>
+                            }
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-inspections">
+                            <i class="bi bi-clipboard-x me-1"></i>Overdue Inspections
+                            @if (Model.InspectionAlerts.Any())
+                            {
+                                <span class="badge bg-warning text-dark ms-1">@Model.InspectionAlerts.Count</span>
+                            }
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#tab-condition">
+                            <i class="bi bi-exclamation-triangle me-1"></i>Poor Condition
+                            @if (Model.ConditionAlerts.Any())
+                            {
+                                <span class="badge bg-danger ms-1">@Model.ConditionAlerts.Count</span>
+                            }
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body tab-content">
+                <!-- Warranty Tab -->
+                <div class="tab-pane active" id="tab-warranty">
+                    @if (!Model.WarrantyAlerts.Any())
+                    {
+                        <p class="text-muted text-center py-3">No warranties expiring within 30 days.</p>
+                    }
+                    @foreach (var w in Model.WarrantyAlerts)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <a asp-controller="Asset" asp-action="Details" asp-route-id="@w.AssetId"
+                                   class="text-decoration-none fw-bold">@w.AssetCode</a>
+                                <span class="text-muted ms-1">@w.Name</span>
+                            </div>
+                            <span class="badge @(w.DaysRemaining <= 7 ? "bg-danger" : "bg-warning text-dark")">
+                                @w.DaysRemaining days left
+                            </span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Inspections Tab -->
+                <div class="tab-pane" id="tab-inspections">
+                    @if (!Model.InspectionAlerts.Any())
+                    {
+                        <p class="text-muted text-center py-3">No overdue inspections.</p>
+                    }
+                    @foreach (var i in Model.InspectionAlerts)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <a asp-controller="Asset" asp-action="Details" asp-route-id="@i.AssetId"
+                                   class="text-decoration-none fw-bold">@i.AssetCode</a>
+                                <span class="text-muted ms-1">@i.Name</span>
+                            </div>
+                            <span class="badge bg-danger">@i.DaysOverdue days overdue</span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Condition Tab -->
+                <div class="tab-pane" id="tab-condition">
+                    @if (!Model.ConditionAlerts.Any())
+                    {
+                        <p class="text-muted text-center py-3">No assets in poor condition.</p>
+                    }
+                    @foreach (var c in Model.ConditionAlerts)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <a asp-controller="Asset" asp-action="Details" asp-route-id="@c.AssetId"
+                                   class="text-decoration-none fw-bold">@c.AssetCode</a>
+                                <span class="text-muted ms-1">@c.Name</span>
+                            </div>
+                            <span class="badge @(c.ConditionScore == ConditionRating.Critical ? "bg-danger" : "bg-warning text-dark")">
+                                @c.ConditionScore
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Recent Activity</h6></div>
+            <div class="card-body p-0">
+                @if (!Model.RecentActivity.Any())
+                {
+                    <p class="text-muted text-center py-3">No recent activity.</p>
+                }
+                @foreach (var a in Model.RecentActivity)
+                {
+                    <div class="d-flex align-items-start p-3 border-bottom">
+                        <i class="bi @a.Icon text-primary me-3 mt-1"></i>
+                        <div>
+                            @if (a.AssetId.HasValue)
+                            {
+                                <a asp-controller="Asset" asp-action="Details" asp-route-id="@a.AssetId"
+                                   class="text-decoration-none">@a.Description</a>
+                            }
+                            else
+                            {
+                                <span>@a.Description</span>
+                            }
+                            <br /><small class="text-muted">@a.Date.ToString("MMM d, h:mm tt")</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

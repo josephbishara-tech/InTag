@@ -1,0 +1,70 @@
+@model InTagViewModelLayer.Manufacturing.ProductionCostResultVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-calculator me-2"></i>Cost Analysis</h1>
+        <p class="text-muted mb-0">@Model.OrderNumber — @Model.ProductName</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<!-- Summary KPIs -->
+<div class="row g-3 mb-4">
+    <div class="col-md-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Material</small><h5 class="fw-bold mb-0">@Model.MaterialCost.ToString("C0")</h5></div></div></div>
+    <div class="col-md-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Labor (Planned)</small><h5 class="fw-bold mb-0">@Model.LaborCost.ToString("C0")</h5></div></div></div>
+    <div class="col-md-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Total Planned</small><h5 class="fw-bold mb-0 text-primary">@Model.TotalPlannedCost.ToString("C0")</h5></div></div></div>
+    <div class="col-md-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Total Actual</small><h5 class="fw-bold mb-0">@Model.TotalActualCost.ToString("C0")</h5></div></div></div>
+    <div class="col-md-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Variance</small><h5 class="fw-bold mb-0 @(Model.CostVariance > 0 ? "text-danger" : "text-success")">@Model.CostVariance.ToString("C0")</h5></div></div></div>
+    <div class="col-md-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Unit Cost</small><h5 class="fw-bold mb-0">@Model.ActualUnitCost.ToString("C2")</h5><small class="text-muted">plan: @Model.PlannedUnitCost.ToString("C2")</small></div></div></div>
+</div>
+
+<div class="row g-3">
+    <!-- Material -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Material Cost — @Model.MaterialCost.ToString("C2")</h6></div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Component</th><th class="text-end">Qty</th><th class="text-end">Unit</th><th class="text-end">Total</th></tr></thead>
+                    <tbody>
+                        @foreach (var line in Model.MaterialLines)
+                        {
+                            <tr><td>@line.Description</td><td class="text-end">@line.Quantity.ToString("N2")</td><td class="text-end">@line.UnitCost.ToString("C2")</td><td class="text-end fw-bold">@line.TotalCost.ToString("C2")</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Labor -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Labor/Overhead Cost — @Model.LaborCost.ToString("C2")</h6></div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Operation</th><th class="text-end">Hours</th><th class="text-end">Rate/Hr</th><th class="text-end">Total</th></tr></thead>
+                    <tbody>
+                        @foreach (var line in Model.LaborLines)
+                        {
+                            <tr><td>@line.Description</td><td class="text-end">@line.Quantity.ToString("N1")</td><td class="text-end">@line.UnitCost.ToString("C2")</td><td class="text-end fw-bold">@line.TotalCost.ToString("C2")</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Output summary -->
+<div class="card border-0 shadow-sm mt-3">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Output Summary</h6></div>
+    <div class="card-body">
+        <div class="row g-3 text-center">
+            <div class="col-md-3"><small class="text-muted d-block">Planned</small><strong>@Model.PlannedQuantity</strong></div>
+            <div class="col-md-3"><small class="text-muted d-block">Completed</small><strong class="text-success">@Model.CompletedQuantity</strong></div>
+            <div class="col-md-3"><small class="text-muted d-block">Scrap</small><strong class="text-danger">@Model.ScrapQuantity</strong></div>
+            <div class="col-md-3"><small class="text-muted d-block">Good Units</small><strong class="text-primary">@Model.GoodUnits</strong></div>
+        </div>
+    </div>
+</div>

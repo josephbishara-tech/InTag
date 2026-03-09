@@ -1,0 +1,33 @@
+@model IReadOnlyList<InTagViewModelLayer.Maintenance.MaintenanceCostByAssetVm>
+
+<div class="content-header"><h1><i class="bi bi-cash-stack me-2"></i>Maintenance Cost by Asset</h1></div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Asset</th><th class="text-end">WOs</th><th class="text-end">Labor</th><th class="text-end">Parts</th><th class="text-end">External</th><th class="text-end">Total</th><th>Distribution</th></tr></thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-3">No completed maintenance data.</td></tr>
+                }
+                @{
+                    var maxCost = Model.Any() ? Model.Max(c => c.TotalCost) : 1;
+                }
+                @foreach (var c in Model)
+                {
+                    var barW = maxCost > 0 ? (double)(c.TotalCost / maxCost * 100) : 0;
+                    <tr>
+                        <td><a asp-controller="Asset" asp-action="Details" asp-route-id="@c.AssetId" class="text-decoration-none fw-bold">@c.AssetCode</a><br /><small class="text-muted">@c.AssetName</small></td>
+                        <td class="text-end">@c.WorkOrderCount</td>
+                        <td class="text-end">@c.LaborCost.ToString("C0")</td>
+                        <td class="text-end">@c.PartsCost.ToString("C0")</td>
+                        <td class="text-end">@c.ExternalCost.ToString("C0")</td>
+                        <td class="text-end fw-bold">@c.TotalCost.ToString("C0")</td>
+                        <td style="width:180px;"><div class="progress" style="height:8px;"><div class="progress-bar bg-primary" style="width:@barW%"></div></div></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

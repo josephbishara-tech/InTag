@@ -1,0 +1,290 @@
+@model InTagViewModelLayer.Maintenance.WorkOrderDetailVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-wrench-adjustable me-2"></i>@Model.WorkOrderNumber</h1>
+        <p class="text-muted mb-0">@Model.Title</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <!-- Overview -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Work Order Details</h6></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-3">
+                        <small class="text-muted d-block">Status</small>
+                        @{
+                            var sBadge = Model.Status switch { WorkOrderStatus.InProgress => "bg-primary", WorkOrderStatus.Completed => "bg-success", WorkOrderStatus.Open => "bg-info", WorkOrderStatus.OnHold => "bg-warning text-dark", _ => "bg-secondary" };
+                        }
+                        <span class="badge @sBadge fs-6">@Model.StatusDisplay</span>
+                        @if (Model.IsOverdue)
+                        {
+                            <span class="badge bg-danger ms-1">Overdue</span>
+                        }
+                    </div>
+                    <div class="col-sm-3">
+                        <small class="text-muted d-block">Type</small>@Model.TypeDisplay
+                    </div>
+                    <div class="col-sm-3">
+                        <small class="text-muted d-block">Priority</small>
+                        @{
+                            var pBadge = Model.Priority switch { WorkOrderPriority.Critical => "bg-danger", WorkOrderPriority.High => "bg-warning text-dark", _ => "bg-light text-dark border" };
+                        }
+                        <span class="badge @pBadge">@Model.PriorityDisplay</span>
+                    </div>
+                    <div class="col-sm-3">
+                        <small class="text-muted d-block">Asset</small>
+                        <a asp-controller="Asset" asp-action="Details" asp-route-id="@Model.AssetId" class="text-decoration-none">@Model.AssetCode</a>
+                        <br /><small class="text-muted">@Model.AssetName</small>
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <hr />
+                    <small class="text-muted d-block">Description</small>
+
+                    <p>@Model.Description</p>
+                }
+                @if (Model.FailureType.HasValue)
+                {
+                    <hr />
+                    <div class="row g-3">
+                        <div class="col-sm-4"><small class="text-muted d-block">Failure Type</small>@Model.FailureType</div>
+                        <div class="col-sm-8"><small class="text-muted d-block">Cause</small>@(Model.FailureCause ?? "—")</div>
+                    </div>
+                }
+                <hr />
+                <div class="row g-3">
+                    <div class="col-sm-3"><small class="text-muted d-block">Due Date</small>@(Model.DueDate?.ToString("g") ?? "—")</div>
+                    <div class="col-sm-3"><small class="text-muted d-block">Started</small>@(Model.StartedDate?.ToString("g") ?? "—")</div>
+                    <div class="col-sm-3"><small class="text-muted d-block">Completed</small>@(Model.CompletedDate?.ToString("g") ?? "—")</div>
+                    <div class="col-sm-3">
+                        <small class="text-muted d-block">SLA</small>
+                        @if (Model.SLATargetHours.HasValue)
+                        {
+                            <span class="@(Model.IsSLABreached ? "text-danger fw-bold" : "")">
+                                @Model.ActualHours?.ToString("N1")h / @Model.SLATargetHours.Value h
+                                @if (Model.IsSLABreached)
+                                {
+                                    <i class="bi bi-exclamation-triangle"></i>
+                                }
+                            </span>
+                        }
+                        else
+                        {
+
+                            <span>—</span>
+                        }
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Resolution))
+                {
+                    <hr />
+                    <small class="text-muted d-block">Resolution</small>
+
+                    <p class="mb-0">@Model.Resolution</p>
+                }
+            </div>
+        </div>
+
+        <!-- Cost Summary -->
+        <div class="row g-3 mb-3">
+            <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Labor</small><h5 class="fw-bold mb-0">@Model.LaborCost.ToString("C0")</h5></div></div></div>
+            <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Parts</small><h5 class="fw-bold mb-0">@Model.PartsCost.ToString("C0")</h5></div></div></div>
+            <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">External</small><h5 class="fw-bold mb-0">@Model.ExternalCost.ToString("C0")</h5></div></div></div>
+            <div class="col-md-3"><div class="card border-0 shadow-sm text-center border-start border-primary border-4"><div class="card-body py-2"><small class="text-muted">Total</small><h5 class="fw-bold mb-0 text-primary">@Model.TotalCost.ToString("C0")</h5></div></div></div>
+        </div>
+
+        <!-- Labor -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Labor (@Model.LaborEntries.Count)</h6></div>
+            @if (Model.Status == WorkOrderStatus.InProgress || Model.Status == WorkOrderStatus.Open || Model.Status == WorkOrderStatus.Assigned)
+            {
+                <div class="card-body border-bottom">
+                    <form asp-action="AddLabor" method="post" class="row g-2 align-items-end">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="WorkOrderId" value="@Model.Id" />
+                        <div class="col-md-3"><label class="form-label small">Technician</label><input type="text" name="TechnicianName" class="form-control form-control-sm" required /></div>
+                        <div class="col-md-2"><label class="form-label small">Hours</label><input type="number" name="HoursWorked" class="form-control form-control-sm" step="0.25" required /></div>
+                        <div class="col-md-2"><label class="form-label small">Rate/Hr</label><input type="number" name="HourlyRate" class="form-control form-control-sm" step="0.01" value="50" /></div>
+                        <div class="col-md-3"><label class="form-label small">Work Performed</label><input type="text" name="WorkPerformed" class="form-control form-control-sm" /></div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus me-1"></i>Add</button></div>
+                    </form>
+                </div>
+            }
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Technician</th><th class="text-end">Hours</th><th class="text-end">Rate</th><th class="text-end">Cost</th><th>Work</th><th></th></tr></thead>
+                    <tbody>
+                        @if (!Model.LaborEntries.Any())
+                        {
+                            <tr><td colspan="6" class="text-center text-muted py-3">No labor recorded.</td></tr>
+                        }
+                        @foreach (var l in Model.LaborEntries)
+                        {
+                            <tr>
+                                <td class="fw-bold">@(l.TechnicianName ?? "—")</td>
+                                <td class="text-end">@l.HoursWorked.ToString("N1")</td>
+                                <td class="text-end">@l.HourlyRate.ToString("C2")</td>
+                                <td class="text-end fw-bold">@l.Cost.ToString("C2")</td>
+                                <td><small class="text-muted">@l.WorkPerformed</small></td>
+                                <td>
+                                    <form asp-action="RemoveLabor" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="laborId" value="@l.Id" /><input type="hidden" name="workOrderId" value="@Model.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Parts -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Parts (@Model.Parts.Count)</h6></div>
+            @if (Model.Status == WorkOrderStatus.InProgress || Model.Status == WorkOrderStatus.Open || Model.Status == WorkOrderStatus.Assigned)
+            {
+                <div class="card-body border-bottom">
+                    <form asp-action="AddPart" method="post" class="row g-2 align-items-end">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="WorkOrderId" value="@Model.Id" />
+                        <div class="col-md-2"><label class="form-label small">Part #</label><input type="text" name="PartNumber" class="form-control form-control-sm" required /></div>
+                        <div class="col-md-3"><label class="form-label small">Part Name</label><input type="text" name="PartName" class="form-control form-control-sm" required /></div>
+                        <div class="col-md-2"><label class="form-label small">Qty</label><input type="number" name="Quantity" class="form-control form-control-sm" step="0.01" required /></div>
+                        <div class="col-md-2"><label class="form-label small">Unit Cost</label><input type="number" name="UnitCost" class="form-control form-control-sm" step="0.01" /></div>
+                        <div class="col-md-2"><button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus me-1"></i>Add</button></div>
+                    </form>
+                </div>
+            }
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Part #</th><th>Name</th><th class="text-end">Qty</th><th class="text-end">Unit</th><th class="text-end">Total</th><th></th></tr></thead>
+                    <tbody>
+                        @if (!Model.Parts.Any())
+                        {
+                            <tr><td colspan="6" class="text-center text-muted py-3">No parts used.</td></tr>
+                        }
+                        @foreach (var p in Model.Parts)
+                        {
+                            <tr>
+                                <td class="fw-bold">@p.PartNumber</td>
+                                <td>@p.PartName</td>
+                                <td class="text-end">@p.Quantity</td>
+                                <td class="text-end">@p.UnitCost.ToString("C2")</td>
+                                <td class="text-end fw-bold">@p.TotalCost.ToString("C2")</td>
+                                <td>
+                                    <form asp-action="RemovePart" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="partId" value="@p.Id" /><input type="hidden" name="workOrderId" value="@Model.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Actions -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Actions</h6></div>
+            <div class="card-body d-grid gap-2">
+                @if (Model.Status == WorkOrderStatus.Draft)
+                {
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@WorkOrderStatus.Open" />
+                        <button type="submit" class="btn btn-info btn-sm w-100"><i class="bi bi-folder2-open me-1"></i>Open</button>
+                    </form>
+                }
+                @if (Model.Status == WorkOrderStatus.Open)
+                {
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@WorkOrderStatus.InProgress" />
+                        <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-play-fill me-1"></i>Start Work</button>
+                    </form>
+                }
+                @if (Model.Status == WorkOrderStatus.Assigned)
+                {
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@WorkOrderStatus.InProgress" />
+                        <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-play-fill me-1"></i>Start Work</button>
+                    </form>
+                }
+                @if (Model.Status == WorkOrderStatus.InProgress)
+                {
+                    <a asp-action="Complete" asp-route-id="@Model.Id" class="btn btn-success btn-sm w-100"><i class="bi bi-check-circle me-1"></i>Complete</a>
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@WorkOrderStatus.OnHold" />
+                        <button type="submit" class="btn btn-outline-warning btn-sm w-100"><i class="bi bi-pause-fill me-1"></i>Put On Hold</button>
+                    </form>
+                }
+                @if (Model.Status == WorkOrderStatus.OnHold)
+                {
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@WorkOrderStatus.InProgress" />
+                        <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-play-fill me-1"></i>Resume</button>
+                    </form>
+                }
+                @if (Model.Status == WorkOrderStatus.Completed)
+                {
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@WorkOrderStatus.Closed" />
+                        <button type="submit" class="btn btn-dark btn-sm w-100"><i class="bi bi-lock me-1"></i>Close</button>
+                    </form>
+                }
+                @if (Model.Status != WorkOrderStatus.Completed && Model.Status != WorkOrderStatus.Closed && Model.Status != WorkOrderStatus.Cancelled)
+                {
+                    <hr class="my-1" />
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@WorkOrderStatus.Cancelled" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Cancel this work order?')"><i class="bi bi-x-circle me-1"></i>Cancel</button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.PMScheduleName))
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body"><small class="text-muted d-block">Generated from PM Schedule</small><strong>@Model.PMScheduleName</strong></div>
+            </div>
+        }
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Timeline</h6></div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-1"><small class="text-muted">Created</small><small>@Model.CreatedDate.ToString("g")</small></div>
+                @if (Model.StartedDate.HasValue)
+                {
+                    <div class="d-flex justify-content-between mb-1"><small class="text-muted">Started</small><small>@Model.StartedDate.Value.ToString("g")</small></div>
+                }
+                @if (Model.CompletedDate.HasValue)
+                {
+                    <div class="d-flex justify-content-between mb-1"><small class="text-muted">Completed</small><small>@Model.CompletedDate.Value.ToString("g")</small></div>
+                }
+                @if (Model.ActualHours.HasValue)
+                {
+                    <div class="d-flex justify-content-between"><small class="text-muted">Duration</small><strong>@Model.ActualHours.Value.ToString("N1") hours</strong></div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

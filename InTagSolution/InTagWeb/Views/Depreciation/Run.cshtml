@@ -1,0 +1,56 @@
+@model InTagViewModelLayer.Asset.BulkDepreciationRunVm
+
+<div class="content-header">
+    <h1><i class="bi bi-play-fill me-2"></i>Run Monthly Depreciation</h1>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-1"></i>
+                    This will calculate and record depreciation for <strong>all eligible assets</strong>
+                    for the selected period. Assets already processed for this period will be skipped.
+                </div>
+
+                <form asp-action="Run" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label asp-for="FiscalYear" class="form-label">Fiscal Year</label>
+                            <input asp-for="FiscalYear" class="form-control" type="number"
+                                   min="2020" max="2050" />
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="FiscalMonth" class="form-label">Month</label>
+                            <select asp-for="FiscalMonth" class="form-select">
+                                <option value="1">January</option>
+                                <option value="2">February</option>
+                                <option value="3">March</option>
+                                <option value="4">April</option>
+                                <option value="5">May</option>
+                                <option value="6">June</option>
+                                <option value="7">July</option>
+                                <option value="8">August</option>
+                                <option value="9">September</option>
+                                <option value="10">October</option>
+                                <option value="11">November</option>
+                                <option value="12">December</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary"
+                                onclick="return confirm('Run depreciation for the selected period? This action cannot be undone.')">
+                            <i class="bi bi-play-fill me-1"></i>Run Depreciation
+                        </button>
+                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

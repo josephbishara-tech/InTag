@@ -1,0 +1,385 @@
+@model InTagViewModelLayer.Manufacturing.ProductionOrderDetailVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-gear-wide-connected me-2"></i>@Model.OrderNumber</h1>
+        <p class="text-muted mb-0">@Model.ProductCode — @Model.ProductName</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <!-- Overview -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Order Details</h6></div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-3">
+                        <small class="text-muted d-block">Status</small>
+                        @{
+                            var sBadge = Model.Status switch { ProductionOrderStatus.InProgress => "bg-primary", ProductionOrderStatus.Completed => "bg-success", ProductionOrderStatus.Released => "bg-info", ProductionOrderStatus.Cancelled => "bg-danger", _ => "bg-secondary" };
+                        }
+                        <span class="badge @sBadge fs-6">@Model.StatusDisplay</span>
+                    </div>
+                    <div class="col-sm-3">
+                        <small class="text-muted d-block">Priority</small>
+                        @{
+                            var pBadge = Model.Priority switch { ProductionPriority.Urgent => "bg-danger", ProductionPriority.High => "bg-warning text-dark", _ => "bg-light text-dark border" };
+                        }
+                        <span class="badge @pBadge">@Model.PriorityDisplay</span>
+                    </div>
+                    <div class="col-sm-3"><small class="text-muted d-block">BOM</small>@(Model.BOMCode ?? "—")</div>
+                    <div class="col-sm-3"><small class="text-muted d-block">Routing</small>@(Model.RoutingCode ?? "—")</div>
+                </div>
+                <hr />
+                <div class="row g-3">
+                    <div class="col-sm-3"><small class="text-muted d-block">Planned</small><strong>@Model.PlannedQuantity</strong></div>
+                    <div class="col-sm-3"><small class="text-muted d-block">Completed</small><strong class="text-success">@Model.CompletedQuantity</strong></div>
+                    <div class="col-sm-3"><small class="text-muted d-block">Scrap</small><strong class="text-danger">@Model.ScrapQuantity</strong></div>
+                    <div class="col-sm-3">
+                        <small class="text-muted d-block">Progress</small>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height:8px;"><div class="progress-bar @(Model.CompletionPercent >= 100 ? "bg-success" : "bg-primary")" style="width:@Model.CompletionPercent%"></div></div>
+                            <strong>@Model.CompletionPercent%</strong>
+                        </div>
+                    </div>
+                </div>
+                @if (Model.PlannedStartDate.HasValue || Model.ActualStartDate.HasValue)
+                {
+                    <hr />
+                    <div class="row g-3">
+                        <div class="col-sm-3"><small class="text-muted d-block">Planned Start</small>@Model.PlannedStartDate?.ToString("g")</div>
+                        <div class="col-sm-3"><small class="text-muted d-block">Planned End</small>@Model.PlannedEndDate?.ToString("g")</div>
+                        <div class="col-sm-3"><small class="text-muted d-block">Actual Start</small>@(Model.ActualStartDate?.ToString("g") ?? "—")</div>
+                        <div class="col-sm-3"><small class="text-muted d-block">Actual End</small>@(Model.ActualEndDate?.ToString("g") ?? "—")</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- OEE -->
+        @if (Model.OEE != null && Model.OEE.TotalProduced > 0)
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">OEE — Overall Equipment Effectiveness</h6></div>
+                <div class="card-body">
+                    <div class="row g-3 text-center">
+                        <div class="col-3">
+                            <h2 class="fw-bold @(Model.OEE.OEE >= 85 ? "text-success" : Model.OEE.OEE >= 60 ? "text-warning" : "text-danger")">@Model.OEE.OEE%</h2>
+                            <small class="text-muted">OEE</small>
+                        </div>
+                        <div class="col-3">
+                            <h4 class="fw-bold">@Model.OEE.Availability%</h4>
+                            <small class="text-muted">Availability</small>
+                            <div class="progress mt-1" style="height:4px;"><div class="progress-bar bg-info" style="width:@Model.OEE.Availability%"></div></div>
+                        </div>
+                        <div class="col-3">
+                            <h4 class="fw-bold">@Model.OEE.Performance%</h4>
+                            <small class="text-muted">Performance</small>
+                            <div class="progress mt-1" style="height:4px;"><div class="progress-bar bg-primary" style="width:@Model.OEE.Performance%"></div></div>
+                        </div>
+                        <div class="col-3">
+                            <h4 class="fw-bold">@Model.OEE.Quality%</h4>
+                            <small class="text-muted">Quality</small>
+                            <div class="progress mt-1" style="height:4px;"><div class="progress-bar bg-success" style="width:@Model.OEE.Quality%"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Production Logs -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Production Log (@Model.Logs.Count)</h6></div>
+            @if (Model.Status == ProductionOrderStatus.InProgress || Model.Status == ProductionOrderStatus.Released)
+            {
+                <div class="card-body border-bottom">
+                    <form asp-action="RecordProduction" method="post" class="row g-2 align-items-end">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ProductionOrderId" value="@Model.Id" />
+                        <div class="col-md-2">
+                            <label class="form-label small">Qty Produced</label>
+                            <input type="number" name="QuantityProduced" class="form-control form-control-sm" step="0.01" required />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Scrap</label>
+                            <input type="number" name="QuantityScrapped" class="form-control form-control-sm" step="0.01" value="0" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Run Time (min)</label>
+                            <input type="number" name="RunTimeActual" class="form-control form-control-sm" step="0.1" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Downtime (min)</label>
+                            <input type="number" name="DowntimeMinutes" class="form-control form-control-sm" step="0.1" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Work Center</label>
+                            <select name="WorkCenterId" class="form-select form-select-sm" asp-items="ViewBag.WorkCenters"><option value="">—</option></select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus me-1"></i>Record</button>
+                        </div>
+                    </form>
+                </div>
+            }
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Date</th><th>Work Center</th><th class="text-end">Produced</th><th class="text-end">Scrap</th><th class="text-end">Run (min)</th><th class="text-end">Down (min)</th><th>Notes</th></tr></thead>
+                    <tbody>
+                        @if (!Model.Logs.Any())
+                        {
+                            <tr><td colspan="7" class="text-center text-muted py-3">No production logged yet.</td></tr>
+                        }
+                        @foreach (var log in Model.Logs)
+                        {
+                            <tr>
+                                <td><small>@log.LogDate.ToString("g")</small></td>
+                                <td>@(log.WorkCenterName ?? "—")</td>
+                                <td class="text-end fw-bold">@log.QuantityProduced</td>
+                                <td class="text-end text-danger">@log.QuantityScrapped</td>
+                                <td class="text-end">@log.RunTimeActual</td>
+                                <td class="text-end">@log.DowntimeMinutes</td>
+                                <td><small class="text-muted">@log.Notes</small></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Quality Checks -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Quality Checks (@Model.QualityChecks.Count)</h6></div>
+            @if (Model.Status == ProductionOrderStatus.InProgress)
+            {
+                <div class="card-body border-bottom">
+                    <form asp-action="RecordQualityCheck" method="post" class="row g-2 align-items-end">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ProductionOrderId" value="@Model.Id" />
+                        <input type="hidden" name="returnOrderId" value="@Model.Id" />
+                        <div class="col-md-3">
+                            <label class="form-label small">Check Name</label>
+                            <input type="text" name="CheckName" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Specification</label>
+                            <input type="text" name="Specification" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Actual Value</label>
+                            <input type="text" name="ActualValue" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Result</label>
+                            <select name="Result" class="form-select form-select-sm" asp-items="ViewBag.QualityResults"></select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus me-1"></i>Record</button>
+                        </div>
+                    </form>
+                </div>
+            }
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Date</th><th>Check</th><th>Spec</th><th>Actual</th><th>Result</th><th>Findings</th></tr></thead>
+                    <tbody>
+                        @if (!Model.QualityChecks.Any())
+                        {
+                            <tr><td colspan="6" class="text-center text-muted py-3">No quality checks.</td></tr>
+                        }
+                        @foreach (var qc in Model.QualityChecks)
+                        {
+                            var qBadge = qc.Result switch { QualityCheckResult.Pass => "bg-success", QualityCheckResult.Fail => "bg-danger", QualityCheckResult.ConditionalPass => "bg-warning text-dark", _ => "bg-secondary" };
+                            <tr>
+                                <td><small>@qc.CheckDate.ToString("g")</small></td>
+                                <td class="fw-bold">@qc.CheckName</td>
+                                <td>@qc.Specification</td>
+                                <td>@qc.ActualValue</td>
+                                <td><span class="badge @qBadge">@qc.ResultDisplay</span></td>
+                                <td><small class="text-muted">@qc.Findings</small></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Lot / Batches -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Lot / Batch Tracking (@Model.LotBatches.Count)</h6></div>
+            @if (Model.Status == ProductionOrderStatus.InProgress || Model.Status == ProductionOrderStatus.Completed)
+            {
+                <div class="card-body border-bottom">
+                    <form asp-action="CreateLot" method="post" class="row g-2 align-items-end">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ProductId" value="@Model.ProductId" />
+                        <input type="hidden" name="ProductionOrderId" value="@Model.Id" />
+                        <input type="hidden" name="returnOrderId" value="@Model.Id" />
+                        <div class="col-md-3">
+                            <label class="form-label small">Quantity</label>
+                            <input type="number" name="Quantity" class="form-control form-control-sm" step="0.01" required />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Expiry Date</label>
+                            <input type="date" name="ExpiryDate" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Storage Location</label>
+                            <input type="text" name="StorageLocation" class="form-control form-control-sm" />
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus me-1"></i>Create Lot</button>
+                        </div>
+                    </form>
+                </div>
+            }
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Lot #</th><th>Qty</th><th>Status</th><th>Manufactured</th><th>Expiry</th><th>Location</th><th>QC</th><th></th></tr></thead>
+                    <tbody>
+                        @if (!Model.LotBatches.Any())
+                        {
+                            <tr><td colspan="8" class="text-center text-muted py-3">No lots created.</td></tr>
+                        }
+                        @foreach (var lot in Model.LotBatches)
+                        {
+                            var lBadge = lot.Status switch { LotBatchStatus.Released => "bg-success", LotBatchStatus.Quarantine => "bg-warning text-dark", LotBatchStatus.Rejected => "bg-danger", LotBatchStatus.Expired => "bg-dark", _ => "bg-secondary" };
+                            <tr class="@(lot.IsExpired ? "table-danger" : "")">
+                                <td class="fw-bold">@lot.LotNumber</td>
+                                <td>@lot.Quantity</td>
+                                <td><span class="badge @lBadge">@lot.StatusDisplay</span></td>
+                                <td><small>@lot.ManufactureDate.ToString("d")</small></td>
+                                <td><small>@(lot.ExpiryDate?.ToString("d") ?? "—")</small></td>
+                                <td>@(lot.StorageLocation ?? "—")</td>
+                                <td>@lot.QualityCheckCount</td>
+                                <td>
+                                    @if (lot.Status == LotBatchStatus.Created || lot.Status == LotBatchStatus.InProcess)
+                                    {
+                                        <form asp-action="ChangeLotStatus" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@lot.Id" />
+                                            <input type="hidden" name="newStatus" value="@LotBatchStatus.Released" />
+                                            <input type="hidden" name="returnOrderId" value="@Model.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Release"><i class="bi bi-check-lg"></i></button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Actions -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Actions</h6></div>
+            <div class="card-body d-grid gap-2">
+                @if (Model.Status == ProductionOrderStatus.Draft)
+                {
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@ProductionOrderStatus.Planned" />
+                        <button type="submit" class="btn btn-outline-primary btn-sm w-100"><i class="bi bi-calendar-check me-1"></i>Plan</button>
+                    </form>
+                }
+                @if (Model.Status == ProductionOrderStatus.Planned)
+                {
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@ProductionOrderStatus.Released" />
+                        <button type="submit" class="btn btn-info btn-sm w-100"><i class="bi bi-play-fill me-1"></i>Release</button>
+                    </form>
+                }
+                @if (Model.Status == ProductionOrderStatus.Released)
+                {
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@ProductionOrderStatus.InProgress" />
+                        <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-gear me-1"></i>Start Production</button>
+                    </form>
+                }
+                @if (Model.Status == ProductionOrderStatus.InProgress)
+                {
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@ProductionOrderStatus.Completed" />
+                        <button type="submit" class="btn btn-success btn-sm w-100" onclick="return confirm('Complete this order?')"><i class="bi bi-check-circle me-1"></i>Complete</button>
+                    </form>
+                }
+                @if (Model.Status == ProductionOrderStatus.Completed)
+                {
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@ProductionOrderStatus.Closed" />
+                        <button type="submit" class="btn btn-dark btn-sm w-100"><i class="bi bi-lock me-1"></i>Close</button>
+                    </form>
+                }
+                @if (Model.Status != ProductionOrderStatus.Completed && Model.Status != ProductionOrderStatus.Closed && Model.Status != ProductionOrderStatus.Cancelled)
+                {
+                    <hr class="my-1" />
+                    <form asp-action="ChangeStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" /><input type="hidden" name="newStatus" value="@ProductionOrderStatus.Cancelled" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Cancel this order?')"><i class="bi bi-x-circle me-1"></i>Cancel</button>
+                    </form>
+                }
+                <hr class="my-1" />
+                @if (Model.RoutingCode != null)
+                {
+                    <a asp-action="Schedule" asp-route-id="@Model.Id" class="btn btn-outline-info btn-sm w-100">
+                        <i class="bi bi-calendar-week me-1"></i>Schedule
+                    </a>
+                }
+                <a asp-action="Cost" asp-route-id="@Model.Id" class="btn btn-outline-info btn-sm w-100 mt-1">
+                    <i class="bi bi-calculator me-1"></i>Cost Analysis
+                </a>
+            </div>
+        </div>
+
+        <!-- BOM Lines -->
+        @if (Model.BOMLines.Any())
+        {
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Material Requirements</h6></div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        @foreach (var line in Model.BOMLines)
+                        {
+                            <li class="list-group-item d-flex justify-content-between">
+                                <div><span class="fw-bold">@line.ComponentCode</span><br /><small class="text-muted">@line.ComponentName</small></div>
+                                <div class="text-end"><span>@line.Quantity @line.UOM</span><br /><small class="text-muted">@line.LineCost.ToString("C2")</small></div>
+                            </li>
+                        }
+                        <li class="list-group-item d-flex justify-content-between fw-bold"><span>Total Material</span><span>@Model.BOMLines.Sum(l => l.LineCost).ToString("C2")</span></li>
+                    </ul>
+                </div>
+            </div>
+        }
+
+        <!-- Operations -->
+        @if (Model.Operations.Any())
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Routing Operations</h6></div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        @foreach (var op in Model.Operations)
+                        {
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between"><span class="badge bg-primary rounded-pill">@op.Sequence</span><small class="text-muted">@op.WorkCenterName</small></div>
+                                <span class="fw-bold">@op.OperationName</span>
+                                <br /><small class="text-muted">Setup: @op.SetupTimeMinutes min | Run: @op.RunTimePerUnitMinutes min/unit</small>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+</div>

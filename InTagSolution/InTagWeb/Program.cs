@@ -1,3 +1,6 @@
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using InTagEntitiesLayer.Interfaces;
+using InTagLogicLayer.Services;
 using InTagWeb.Configuration;
 using InTagWeb.Middleware;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +15,16 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddInTagMultiTenancy(builder.Configuration);
 builder.Services.AddInTagAuthentication(builder.Configuration);
 builder.Services.AddInTagHealthChecks(builder.Configuration);
+builder.Services.AddInTagRepositories();
+builder.Services.AddInTagAssetServices();
+builder.Services.AddScoped<IWorkflowHook, WorkflowHookService>();
+builder.Services.AddInTagDocumentServices(builder.Configuration);
+builder.Services.AddInTagManufacturingServices();
+builder.Services.AddInTagMaintenanceServices();
+builder.Services.AddInTagInventoryServices();
+
+
+
 
 // ── DbContext (main tenant DB) ───────────
 builder.Services.AddDbContext<InTagDataLayer.Context.InTagDbContext>(options =>
@@ -23,6 +36,7 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     await AuthServiceRegistration.SeedRolesAsync(scope.ServiceProvider);
+    await TenantServiceRegistration.SeedDefaultTenantAsync(scope.ServiceProvider);
 }
 
 // ═══ MIDDLEWARE PIPELINE (ORDER MATTERS!) ═══

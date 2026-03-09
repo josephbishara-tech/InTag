@@ -1,0 +1,50 @@
+@model InTagViewModelLayer.Manufacturing.RoutingDetailVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-signpost-split me-2"></i>@Model.RoutingCode</h1>
+        <p class="text-muted mb-0">@Model.ProductName (v@Model.Version) — @Model.TotalCycleTimeMinutes min total</p>
+    </div>
+    <a asp-action="Routings" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Operations (@Model.Operations.Count)</h6></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Seq</th><th>Operation</th><th>Work Center</th><th class="text-end">Setup (min)</th><th class="text-end">Run/Unit (min)</th><th class="text-end">Overlap</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var op in Model.Operations)
+                {
+                    <tr>
+                        <td><span class="badge bg-primary rounded-pill">@op.Sequence</span></td>
+                        <td class="fw-bold">@op.OperationName</td>
+                        <td>@op.WorkCenterName</td>
+                        <td class="text-end">@op.SetupTimeMinutes</td>
+                        <td class="text-end">@op.RunTimePerUnitMinutes</td>
+                        <td class="text-end">@op.OverlapQuantity</td>
+                        <td>
+                            <form asp-action="RemoveOperation" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="operationId" value="@op.Id" /><input type="hidden" name="routingId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-body border-top">
+        <form asp-action="AddOperation" method="post" class="row g-2 align-items-end">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="RoutingId" value="@Model.Id" />
+            <div class="col-md-1"><label class="form-label small">Seq</label><input type="number" name="Sequence" class="form-control form-control-sm" value="@((Model.Operations.Any() ? Model.Operations.Max(o => o.Sequence) + 10 : 10))" /></div>
+            <div class="col-md-3"><label class="form-label small">Operation</label><input type="text" name="OperationName" class="form-control form-control-sm" required /></div>
+            <div class="col-md-2"><label class="form-label small">Work Center</label><select name="WorkCenterId" class="form-select form-select-sm" asp-items="ViewBag.WorkCenters"></select></div>
+            <div class="col-md-2"><label class="form-label small">Setup (min)</label><input type="number" name="SetupTimeMinutes" class="form-control form-control-sm" step="0.1" value="0" /></div>
+            <div class="col-md-2"><label class="form-label small">Run/Unit (min)</label><input type="number" name="RunTimePerUnitMinutes" class="form-control form-control-sm" step="0.01" value="0" /></div>
+            <div class="col-md-2"><button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus me-1"></i>Add</button></div>
+        </form>
+    </div>
+</div>

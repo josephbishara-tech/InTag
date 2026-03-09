@@ -1,0 +1,35 @@
+@model InTagViewModelLayer.Maintenance.MeterReadingVm
+@{
+    var pm = ViewBag.Schedule as InTagViewModelLayer.Maintenance.PMScheduleDetailVm;
+}
+
+<div class="content-header"><h1><i class="bi bi-speedometer me-2"></i>Meter Reading — @pm.Name</h1><p class="text-muted mb-0">@pm.AssetCode — @pm.AssetName | @pm.MeterType</p></div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row g-3 mb-3">
+                    <div class="col-6"><small class="text-muted d-block">Last Reading</small><h4 class="fw-bold">@pm.LastMeterReading?.ToString("N1") <small>@pm.MeterType</small></h4></div>
+                    <div class="col-6"><small class="text-muted d-block">Next Threshold</small><h4 class="fw-bold text-primary">@pm.NextMeterThreshold?.ToString("N1") <small>@pm.MeterType</small></h4></div>
+                </div>
+                @if (pm.MeterIntervalValue.HasValue)
+                {
+                    var pct = pm.LastMeterReading.HasValue && pm.NextMeterThreshold.HasValue && pm.MeterIntervalValue > 0
+                    ? (double)((pm.LastMeterReading.Value - (pm.NextMeterThreshold.Value - pm.MeterIntervalValue.Value)) / pm.MeterIntervalValue.Value * 100) : 0;
+                    <div class="progress mb-3" style="height:10px;"><div class="progress-bar @(pct > 80 ? "bg-warning" : "bg-primary")" style="width:@Math.Min(100, pct)%"></div></div>
+                }
+                <form asp-action="MeterReading" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="PMScheduleId" />
+                    <div class="mb-3"><label asp-for="CurrentReading" class="form-label">Current @pm.MeterType Reading</label><input asp-for="CurrentReading" class="form-control" type="number" step="0.01" autofocus /><span asp-validation-for="CurrentReading" class="text-danger small"></span></div>
+                    <div class="mb-3"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="2"></textarea></div>
+                    <div class="d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="bi bi-speedometer me-1"></i>Record Reading</button><a asp-action="Details" asp-route-id="@pm.Id" class="btn btn-outline-secondary">Cancel</a></div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

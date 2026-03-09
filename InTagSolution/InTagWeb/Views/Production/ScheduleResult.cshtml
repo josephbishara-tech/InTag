@@ -1,0 +1,71 @@
+@model InTagViewModelLayer.Manufacturing.ScheduleResultVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-calendar-week me-2"></i>Schedule — @Model.OrderNumber</h1>
+        <p class="text-muted mb-0">@Model.PlannedStart.ToString("d") → @Model.PlannedEnd.ToString("d") (@Model.TotalDays days)</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+@if (Model.HasOverloadedWorkCenters)
+{
+    <div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-1"></i>One or more work centers are overloaded for this schedule. Consider adjusting dates or splitting the order.</div>
+}
+
+<!-- Gantt-style timeline -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Operation Schedule</h6></div>
+    <div class="card-body">
+        @{
+            var totalSpan = Math.Max(1, (Model.PlannedEnd - Model.PlannedStart).TotalDays);
+        }
+        @foreach (var op in Model.Operations)
+        {
+            var leftPct = (op.StartDate - Model.PlannedStart).TotalDays / totalSpan * 100;
+            var widthPct = Math.Max(3, (op.EndDate - op.StartDate).TotalDays / totalSpan * 100);
+            var barColor = op.IsOverloaded ? "bg-danger" : "bg-primary";
+            <div class="mb-3">
+                <div class="d-flex justify-content-between small mb-1">
+                    <span><span class="badge bg-primary rounded-pill">@op.Sequence</span> @op.OperationName</span>
+                    <span class="text-muted">@op.WorkCenterName — @op.DaysRequired day(s)</span>
+                </div>
+                <div class="position-relative bg-light rounded" style="height:28px;">
+                    <div class="@barColor rounded position-absolute d-flex align-items-center px-2" style="left:@leftPct%; width:@widthPct%; height:100%; min-width:40px;">
+                        <small class="text-white text-truncate">@op.StartDate.ToString("MMM d") — @op.EndDate.ToString("MMM d")</small>
+                    </div>
+                </div>
+                <small class="text-muted">Utilization: <strong class="@(op.IsOverloaded ? "text-danger" : "")">@op.WorkCenterUtilization%</strong></small>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Schedule Table -->
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Seq</th><th>Operation</th><th>Work Center</th><th>Start</th><th>End</th><th class="text-end">Time (min)</th><th class="text-end">Days</th><th>Utilization</th></tr></thead>
+            <tbody>
+                @foreach (var op in Model.Operations)
+                {
+                    <tr class="@(op.IsOverloaded ? "table-danger" : "")">
+                        <td><span class="badge bg-primary rounded-pill">@op.Sequence</span></td>
+                        <td class="fw-bold">@op.OperationName</td>
+                        <td>@op.WorkCenterName</td>
+                        <td><small>@op.StartDate.ToString("g")</small></td>
+                        <td><small>@op.EndDate.ToString("g")</small></td>
+                        <td class="text-end">@op.TotalMinutes.ToString("N0")</td>
+                        <td class="text-end">@op.DaysRequired</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-1">
+                                <div class="progress flex-grow-1" style="height:6px;"><div class="progress-bar @(op.IsOverloaded ? "bg-danger" : op.WorkCenterUtilization > 80 ? "bg-warning" : "bg-success")" style="width:@Math.Min(100, (double)op.WorkCenterUtilization)%"></div></div>
+                                <small>@op.WorkCenterUtilization%</small>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

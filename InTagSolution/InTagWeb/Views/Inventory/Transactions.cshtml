@@ -1,0 +1,67 @@
+@model InTagViewModelLayer.Inventory.TransactionListResultVm
+@using InTagEntitiesLayer.Enums
+@{
+    var filter = ViewBag.CurrentFilter as InTagViewModelLayer.Inventory.TransactionFilterVm;
+}
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-arrow-left-right me-2"></i>Transactions</h1>
+    <a asp-action="RecordTransaction" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Record Transaction</a>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3"><input type="text" name="SearchTerm" value="@filter?.SearchTerm" class="form-control form-control-sm" placeholder="Search TXN#, product, ref..." /></div>
+            <div class="col-md-2"><select name="Type" class="form-select form-select-sm" asp-items="ViewBag.TransactionTypes"><option value="">All Types</option></select></div>
+            <div class="col-md-2"><select name="WarehouseId" class="form-select form-select-sm" asp-items="ViewBag.Warehouses"><option value="">All Warehouses</option></select></div>
+            <div class="col-md-1"><button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-search"></i></button></div>
+            <div class="col-md-1"><a asp-action="Transactions" class="btn btn-sm btn-outline-secondary w-100">Clear</a></div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><span class="small text-muted">@Model.TotalCount transaction(s)</span></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>TXN #</th><th>Type</th><th>Product</th><th>Warehouse</th><th class="text-end">Qty</th><th class="text-end">Cost</th><th>Date</th><th>Ref</th></tr></thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="8" class="text-center text-muted py-4">No transactions found.</td></tr>
+                }
+                @foreach (var t in Model.Items)
+                {
+                    var tColor = t.IsInbound ? "text-success" : "text-danger";
+                    var tSign = t.IsInbound ? "+" : "-";
+                    var tBadge = t.Type switch { TransactionType.Receipt => "bg-success", TransactionType.Issue => "bg-danger", TransactionType.Transfer => "bg-info", TransactionType.Adjustment => "bg-warning text-dark", TransactionType.CycleCount => "bg-secondary", TransactionType.Scrap => "bg-dark", _ => "bg-light text-dark" };
+                    <tr>
+                        <td class="fw-bold">@t.TransactionNumber</td>
+                        <td><span class="badge @tBadge">@t.TypeDisplay</span></td>
+                        <td><strong>@t.ProductCode</strong><br /><small class="text-muted">@t.ProductName</small></td>
+                        <td>@t.WarehouseCode</td>
+                        <td class="text-end fw-bold @tColor">@tSign@t.Quantity.ToString("N2")</td>
+                        <td class="text-end">@t.TotalCost.ToString("C2")</td>
+                        <td><small>@t.TransactionDate.ToString("g")</small></td>
+                        <td><small class="text-muted">@t.ReferenceNumber</small></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.TotalPages > 1)
+    {
+        <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+            <span class="small text-muted">Page @Model.Page of @Model.TotalPages</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    @for (var p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
+                    {
+                        <li class="page-item @(p == Model.Page ? "active" : "")"><a class="page-link" asp-action="Transactions" asp-route-Page="@p" asp-route-SearchTerm="@filter?.SearchTerm" asp-route-Type="@filter?.Type" asp-route-WarehouseId="@filter?.WarehouseId">@p</a></li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    }
+</div>

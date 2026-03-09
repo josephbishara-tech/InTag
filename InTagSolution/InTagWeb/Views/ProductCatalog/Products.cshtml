@@ -1,0 +1,41 @@
+@model IReadOnlyList<InTagViewModelLayer.Manufacturing.ProductListItemVm>
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-box-seam me-2"></i>Products</h1>
+    <a asp-action="CreateProduct" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>New Product</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Code</th><th>Name</th><th>Category</th><th>UOM</th><th>Type</th><th class="text-end">Std Cost</th><th></th></tr></thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">No products. <a asp-action="CreateProduct">Create one</a>.</td></tr>
+                }
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td><a asp-action="ProductDetail" asp-route-id="@p.Id" class="fw-bold text-decoration-none">@p.ProductCode</a></td>
+                        <td>@p.Name</td>
+                        <td>@(p.Category ?? "—")</td>
+                        <td><small>@p.UOM</small></td>
+                        <td>
+                            @if (p.IsRawMaterial)
+                            {
+                                <span class="badge bg-secondary">Raw</span>
+                            }
+                            @if (p.IsFinishedGood)
+                            {
+                                <span class="badge bg-success">Finished</span>
+                            }
+                        </td>
+                        <td class="text-end">@p.StandardCost.ToString("C2")</td>
+                        <td><a asp-action="ProductDetail" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

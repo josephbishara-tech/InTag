@@ -1,0 +1,26 @@
+@model InTagViewModelLayer.Inventory.WarehouseCreateVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-plus-circle me-2"></i>New Warehouse</h1>
+    <a asp-action="Warehouses" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <form asp-action="CreateWarehouse" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                    <div class="mb-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" /><span asp-validation-for="Code" class="text-danger small"></span></div>
+                    <div class="mb-3"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger small"></span></div>
+                    <div class="mb-4"><label asp-for="Address" class="form-label"></label><textarea asp-for="Address" class="form-control" rows="2"></textarea></div>
+                    <div class="d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Create</button><a asp-action="Warehouses" class="btn btn-outline-secondary">Cancel</a></div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

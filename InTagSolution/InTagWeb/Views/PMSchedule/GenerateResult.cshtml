@@ -1,0 +1,28 @@
+@model InTagViewModelLayer.Maintenance.PMGenerationResultVm
+
+<div class="content-header"><h1><i class="bi bi-check-circle me-2"></i>PM Generation Results</h1></div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center border-start border-success border-4"><div class="card-body py-2"><small class="text-muted">Generated</small><h3 class="fw-bold text-success mb-0">@Model.WorkOrdersGenerated</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Processed</small><h3 class="fw-bold mb-0">@Model.SchedulesProcessed</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Skipped/Failed</small><h3 class="fw-bold text-warning mb-0">@Model.SchedulesSkipped</h3></div></div></div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Schedule</th><th>Asset</th><th>Status</th><th>Work Order</th><th>Notes</th></tr></thead>
+            <tbody>
+                @foreach (var d in Model.Details)
+                {
+                    var badge = d.Status == "Generated" ? "bg-success" : "bg-danger";
+                    <tr><td class="fw-bold">@d.ScheduleName</td><td>@d.AssetCode</td><td><span class="badge @badge">@d.Status</span></td><td>@(d.WorkOrderNumber ?? "—")</td><td><small class="text-muted">@d.Message</small></td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="card-footer bg-transparent">
+        <a asp-controller="WorkOrder" asp-action="Index" class="btn btn-outline-primary btn-sm"><i class="bi bi-wrench-adjustable me-1"></i>View Work Orders</a>
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-calendar-check me-1"></i>View Schedules</a>
+    </div>
+</div>

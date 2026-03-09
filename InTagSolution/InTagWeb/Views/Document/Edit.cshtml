@@ -1,0 +1,80 @@
+@model InTagViewModelLayer.Document.DocumentUpdateVm
+@{
+    var docId = ViewBag.DocId as int?;
+    var docNumber = ViewBag.DocNumber as string;
+}
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-pencil me-2"></i>Edit @docNumber</h1>
+    <a asp-action="Details" asp-route-id="@docId" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form asp-action="Edit" asp-route-id="@docId" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-8">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Category" class="form-label"></label>
+                    <select asp-for="Category" asp-items="ViewBag.Categories" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="DepartmentId" class="form-label">Department</label>
+                    <select asp-for="DepartmentId" asp-items="ViewBag.Departments" class="form-select">
+                        <option value="">— None —</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="ReviewCycle" class="form-label"></label>
+                    <select asp-for="ReviewCycle" asp-items="ViewBag.ReviewCycles" class="form-select"></select>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="ConfidentialityLevel" class="form-label"></label>
+                    <select asp-for="ConfidentialityLevel" class="form-select">
+                        <option value="">— Select —</option>
+                        <option>Public</option>
+                        <option>Internal</option>
+                        <option>Confidential</option>
+                        <option>Restricted</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="IsoReference" class="form-label"></label>
+                    <input asp-for="IsoReference" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Tags" class="form-label"></label>
+                    <input asp-for="Tags" class="form-control" />
+                </div>
+                <div class="col-12">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i>Save Changes
+                </button>
+                <a asp-action="Details" asp-route-id="@docId" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

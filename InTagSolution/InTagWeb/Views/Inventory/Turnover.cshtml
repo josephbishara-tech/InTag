@@ -1,0 +1,43 @@
+@model InTagViewModelLayer.Inventory.InventoryTurnoverVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-arrow-repeat me-2"></i>Inventory Turnover</h1>
+    <form method="get" class="d-flex gap-2">
+        <select name="months" class="form-select form-select-sm" onchange="this.form.submit()" style="width:140px;">
+            @foreach (var m in new[] { 3, 6, 12, 24 })
+            {
+                <option value="@m" selected="@(ViewBag.Months == m)">Last @m months</option>
+            }
+        </select>
+    </form>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Avg Inventory</small><h4 class="fw-bold mb-0">@Model.AverageInventoryValue.ToString("C0")</h4></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Cost of Goods Issued</small><h4 class="fw-bold mb-0">@Model.COGSValue.ToString("C0")</h4></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center border-start border-primary border-4"><div class="card-body py-2"><small class="text-muted">Turnover Ratio</small><h4 class="fw-bold text-primary mb-0">@Model.TurnoverRatio×</h4></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Days on Hand</small><h4 class="fw-bold mb-0">@Model.DaysOnHand days</h4></div></div></div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Turnover by Product</h6></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Product</th><th class="text-end">Avg Stock</th><th class="text-end">Total Issued</th><th class="text-end">Turnover</th><th class="text-end">Days on Hand</th><th>Performance</th></tr></thead>
+            <tbody>
+                @foreach (var p in Model.ByProduct)
+                {
+                    var perfBadge = p.Performance switch { "Fast" => "bg-success", "Normal" => "bg-primary", "Slow" => "bg-warning text-dark", _ => "bg-danger" };
+                    <tr class="@(p.Performance == "Dead" ? "table-danger" : p.Performance == "Slow" ? "table-warning" : "")">
+                        <td><strong>@p.ProductCode</strong><br /><small class="text-muted">@p.ProductName</small></td>
+                        <td class="text-end">@p.AverageStock.ToString("N2")</td>
+                        <td class="text-end">@p.TotalIssued.ToString("N2")</td>
+                        <td class="text-end fw-bold">@p.TurnoverRatio×</td>
+                        <td class="text-end">@(p.DaysOnHand > 900 ? "∞" : p.DaysOnHand.ToString("N0"))</td>
+                        <td><span class="badge @perfBadge">@p.Performance</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

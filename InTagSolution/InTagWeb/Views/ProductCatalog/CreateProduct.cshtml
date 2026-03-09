@@ -1,0 +1,33 @@
+@model InTagViewModelLayer.Manufacturing.ProductCreateVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-plus-circle me-2"></i>New Product</h1>
+    <a asp-action="Products" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form asp-action="CreateProduct" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4"><label asp-for="ProductCode" class="form-label"></label><input asp-for="ProductCode" class="form-control" /><span asp-validation-for="ProductCode" class="text-danger small"></span></div>
+                <div class="col-md-4"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger small"></span></div>
+                <div class="col-md-4"><label asp-for="UOM" class="form-label"></label><select asp-for="UOM" asp-items="ViewBag.UOMs" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="Category" class="form-label"></label><input asp-for="Category" class="form-control" /></div>
+                <div class="col-md-4"><label asp-for="StandardCost" class="form-label"></label><div class="input-group"><span class="input-group-text">$</span><input asp-for="StandardCost" class="form-control" type="number" step="0.01" /></div></div>
+                <div class="col-md-4"><label asp-for="Barcode" class="form-label"></label><input asp-for="Barcode" class="form-control" /></div>
+                <div class="col-md-3"><div class="form-check mt-4"><input asp-for="IsRawMaterial" class="form-check-input" /><label asp-for="IsRawMaterial" class="form-check-label">Raw Material</label></div></div>
+                <div class="col-md-3"><div class="form-check mt-4"><input asp-for="IsFinishedGood" class="form-check-input" /><label asp-for="IsFinishedGood" class="form-check-label">Finished Good</label></div></div>
+                <div class="col-12"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control" rows="2"></textarea></div>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Create Product</button>
+                <a asp-action="Products" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

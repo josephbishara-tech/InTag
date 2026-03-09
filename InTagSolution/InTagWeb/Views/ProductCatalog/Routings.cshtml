@@ -1,0 +1,39 @@
+@model IReadOnlyList<InTagViewModelLayer.Manufacturing.RoutingDetailVm>
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-signpost-split me-2"></i>Routings</h1>
+    <a asp-action="CreateRouting" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>New Routing</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Code</th><th>Product</th><th>Version</th><th class="text-end">Operations</th><th class="text-end">Cycle Time (min)</th><th>Active</th><th></th></tr></thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">No routings. <a asp-action="CreateRouting">Create one</a>.</td></tr>
+                }
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td><a asp-action="RoutingDetail" asp-route-id="@r.Id" class="fw-bold text-decoration-none">@r.RoutingCode</a></td>
+                        <td>@r.ProductName</td>
+                        <td><span class="badge bg-light text-dark">v@r.Version</span></td>
+                        <td class="text-end">@r.Operations.Count</td>
+                        <td class="text-end">@r.TotalCycleTimeMinutes.ToString("N1")</td>
+                        <td>@if (r.IsActive) {
+                        <span class="badge bg-success">Active</span>
+                    } else
+                    {
+
+                        <span class="badge bg-secondary">Inactive</span>
+                    }
+</td>
+                    <td><a asp-action="RoutingDetail" asp-route-id="@r.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                </tr>
+                                }
+            </tbody>
+        </table>
+    </div>
+</div>

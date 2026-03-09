@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using InTagEntitiesLayer.Common;
 using InTagEntitiesLayer.Interfaces;
@@ -30,7 +30,8 @@ namespace InTagLogicLayer.Services
             if (Guid.TryParse(tenantClaim, out var tenantId))
                 return tenantId;
 
-            throw new UnauthorizedAccessException("Tenant could not be resolved.");
+            // System operation (no HTTP context) — return empty GUID
+            return Guid.Empty;
         }
 
         public Guid GetCurrentUserId()
@@ -41,7 +42,7 @@ namespace InTagLogicLayer.Services
             if (Guid.TryParse(userClaim, out var userId))
                 return userId;
 
-            return Guid.Empty; // Anonymous / system operations
+            return Guid.Empty;
         }
 
         public Tenant? GetCurrentTenant() => _currentTenant;

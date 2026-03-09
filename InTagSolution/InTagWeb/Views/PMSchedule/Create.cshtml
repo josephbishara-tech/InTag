@@ -1,0 +1,33 @@
+@model InTagViewModelLayer.Maintenance.PMScheduleCreateVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-plus-circle me-2"></i>New PM Schedule</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /><span asp-validation-for="Name" class="text-danger small"></span></div>
+                <div class="col-md-6"><label asp-for="AssetId" class="form-label">Asset</label><select asp-for="AssetId" asp-items="ViewBag.Assets" class="form-select"><option value="">— Select —</option></select></div>
+                <div class="col-md-4"><label asp-for="TriggerType" class="form-label"></label><select asp-for="TriggerType" asp-items="ViewBag.TriggerTypes" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="Frequency" class="form-label"></label><select asp-for="Frequency" asp-items="ViewBag.Frequencies" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="DefaultPriority" class="form-label"></label><select asp-for="DefaultPriority" asp-items="ViewBag.Priorities" class="form-select"></select></div>
+                <div class="col-md-4"><label asp-for="MeterType" class="form-label"></label><input asp-for="MeterType" class="form-control" placeholder="e.g. Hours, Km" /></div>
+                <div class="col-md-4"><label asp-for="MeterIntervalValue" class="form-label"></label><input asp-for="MeterIntervalValue" class="form-control" type="number" step="0.01" /></div>
+                <div class="col-md-4"><label asp-for="TriggerConditionThreshold" class="form-label"></label><select asp-for="TriggerConditionThreshold" asp-items="ViewBag.ConditionRatings" class="form-select"><option value="">— None —</option></select></div>
+                <div class="col-md-4"><label asp-for="EstimatedLaborHours" class="form-label"></label><div class="input-group"><input asp-for="EstimatedLaborHours" class="form-control" type="number" step="0.5" /><span class="input-group-text">hrs</span></div></div>
+                <div class="col-md-4"><label asp-for="SLATargetHours" class="form-label"></label><div class="input-group"><input asp-for="SLATargetHours" class="form-control" type="number" step="0.5" /><span class="input-group-text">hrs</span></div></div>
+                <div class="col-12"><label asp-for="TaskDescription" class="form-label"></label><textarea asp-for="TaskDescription" class="form-control" rows="3" placeholder="Describe PM tasks to perform..."></textarea></div>
+                <div class="col-12"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control" rows="2"></textarea></div>
+            </div>
+            <div class="d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Create Schedule</button><a asp-action="Index" class="btn btn-outline-secondary">Cancel</a></div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

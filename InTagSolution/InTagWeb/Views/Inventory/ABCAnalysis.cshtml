@@ -1,0 +1,61 @@
+@model InTagViewModelLayer.Inventory.ABCAnalysisVm
+
+<div class="content-header"><h1><i class="bi bi-bar-chart-steps me-2"></i>ABC Analysis</h1></div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Total Value</small><h3 class="fw-bold text-primary mb-0">@Model.TotalInventoryValue.ToString("C0")</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Total SKUs</small><h3 class="fw-bold mb-0">@Model.TotalSKUs</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Classification</small><h3 class="fw-bold mb-0">80 / 15 / 5</h3><small class="text-muted">A / B / C value split</small></div></div></div>
+</div>
+
+<!-- Category summary -->
+<div class="row g-3 mb-4">
+    @foreach (var cat in Model.Categories)
+    {
+        var color = cat.Category switch { "A" => "bg-danger", "B" => "bg-warning", _ => "bg-info" };
+        var borderColor = cat.Category switch { "A" => "border-danger", "B" => "border-warning", _ => "border-info" };
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm border-start @borderColor border-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h4 class="fw-bold mb-0"><span class="badge @color fs-5">Class @cat.Category</span></h4>
+                        <span class="fw-bold">@cat.ValuePercent% of value</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>@cat.SKUs SKUs (@cat.SKUPercent%)</span>
+                        <span>@cat.TotalValue.ToString("C0")</span>
+                    </div>
+                    <div class="progress mt-2" style="height:8px;">
+                        <div class="progress-bar @color" style="width:@cat.ValuePercent%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Items table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">All Items — Ranked by Value</h6></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>#</th><th>Product</th><th>Warehouse</th><th class="text-end">Qty</th><th class="text-end">Unit Cost</th><th class="text-end">Value</th><th class="text-end">Cumulative %</th><th>Class</th></tr></thead>
+            <tbody>
+                @foreach (var item in Model.Items.Take(50))
+                {
+                    var cls = item.Category switch { "A" => "bg-danger", "B" => "bg-warning text-dark", _ => "bg-info" };
+                    <tr>
+                        <td class="text-muted">@item.Rank</td>
+                        <td><strong>@item.ProductCode</strong><br /><small class="text-muted">@item.ProductName</small></td>
+                        <td>@item.WarehouseCode</td>
+                        <td class="text-end">@item.QuantityOnHand.ToString("N2")</td>
+                        <td class="text-end">@item.UnitCost.ToString("C4")</td>
+                        <td class="text-end fw-bold">@item.TotalValue.ToString("C2")</td>
+                        <td class="text-end">@item.CumulativePercent.ToString("N1")%</td>
+                        <td><span class="badge @cls">@item.Category</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

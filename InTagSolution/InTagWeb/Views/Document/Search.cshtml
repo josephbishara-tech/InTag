@@ -1,0 +1,57 @@
+@model InTagViewModelLayer.Document.DocumentSearchResultVm
+@{
+    var q = ViewBag.SearchTerm as string;
+}
+
+<div class="content-header">
+    <h1><i class="bi bi-search me-2"></i>Document Search</h1>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" asp-action="Search" class="d-flex gap-2">
+            <input type="text" name="q" value="@q" class="form-control"
+                   placeholder="Search document content, titles, tags..." autofocus />
+            <button type="submit" class="btn btn-primary px-4">Search</button>
+        </form>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(q))
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent">
+            <span class="small text-muted">@Model.TotalCount result(s) for "<strong>@q</strong>"</span>
+        </div>
+        <div class="card-body p-0">
+            @if (!Model.Hits.Any())
+            {
+                <p class="text-muted text-center py-4">No results found.</p>
+            }
+            @foreach (var hit in Model.Hits)
+            {
+                <div class="p-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <a asp-action="Details" asp-route-id="@hit.DocumentId" class="text-decoration-none fw-bold">
+                                @hit.DocNumber
+                            </a>
+                            <span class="ms-2">@hit.Title</span>
+                            <span class="badge @(hit.MatchSource == "content" ? "bg-info" : "bg-secondary") ms-2">
+                                @hit.MatchSource
+                            </span>
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(hit.Snippet))
+                    {
+                        <p class="small text-muted mt-1 mb-0">@hit.Snippet</p>
+                    }
+                    @if (!string.IsNullOrEmpty(hit.FileName))
+                    {
+                        <small class="text-muted"><i class="bi bi-file-earmark me-1"></i>@hit.FileName</small>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
