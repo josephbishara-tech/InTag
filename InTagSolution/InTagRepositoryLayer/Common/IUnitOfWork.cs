@@ -2,11 +2,13 @@ using InTagEntitiesLayer.Document;
 using InTagEntitiesLayer.Inventory;
 using InTagEntitiesLayer.Maintenance;
 using InTagEntitiesLayer.Manufacturing;
+using InTagEntitiesLayer.Workflow;
 using InTagRepositoryLayer.Asset;
 using InTagRepositoryLayer.Document;
 using InTagRepositoryLayer.Inventory;
 using InTagRepositoryLayer.Maintenance;
 using InTagRepositoryLayer.Manufacturing;
+using InTagRepositoryLayer.Workflow;
 
 
 namespace InTagRepositoryLayer.Common
@@ -55,6 +57,13 @@ namespace InTagRepositoryLayer.Common
         IGenericRepository<InventoryTransaction> InventoryTransactions { get; }
         IGenericRepository<CycleCount> CycleCounts { get; }
         IGenericRepository<CycleCountLine> CycleCountLines { get; }
+
+        // Workflow Module
+        IWorkflowRepository WorkflowInstances { get; }
+        IGenericRepository<WorkflowDefinition> WorkflowDefinitions { get; }
+        IGenericRepository<WorkflowStep> WorkflowSteps { get; }
+        IGenericRepository<WorkflowAction> WorkflowActions { get; }
+        IGenericRepository<Notification> Notifications { get; }
         Task<int> SaveChangesAsync();
     }
 }

@@ -3,11 +3,13 @@ using InTagEntitiesLayer.Document;
 using InTagEntitiesLayer.Inventory;
 using InTagEntitiesLayer.Maintenance;
 using InTagEntitiesLayer.Manufacturing;
+using InTagEntitiesLayer.Workflow;
 using InTagRepositoryLayer.Asset;
 using InTagRepositoryLayer.Document;
 using InTagRepositoryLayer.Inventory;
 using InTagRepositoryLayer.Maintenance;
 using InTagRepositoryLayer.Manufacturing;
+using InTagRepositoryLayer.Workflow;
 
 
 namespace InTagRepositoryLayer.Common
@@ -53,6 +55,11 @@ namespace InTagRepositoryLayer.Common
             InventoryTransactions = new GenericRepository<InventoryTransaction>(context);
             CycleCounts = new GenericRepository<CycleCount>(context);
             CycleCountLines = new GenericRepository<CycleCountLine>(context);
+            WorkflowInstances = new WorkflowRepository(context);
+            WorkflowDefinitions = new GenericRepository<WorkflowDefinition>(context);
+            WorkflowSteps = new GenericRepository<WorkflowStep>(context);
+            WorkflowActions = new GenericRepository<WorkflowAction>(context);
+            Notifications = new GenericRepository<Notification>(context);
         }
 
 
@@ -100,6 +107,14 @@ namespace InTagRepositoryLayer.Common
         public IGenericRepository<InventoryTransaction> InventoryTransactions { get; }
         public IGenericRepository<CycleCount> CycleCounts { get; }
         public IGenericRepository<CycleCountLine> CycleCountLines { get; }
+
+        // Workflow Module
+        public IWorkflowRepository WorkflowInstances { get; }
+        public IGenericRepository<WorkflowDefinition> WorkflowDefinitions { get; }
+        public IGenericRepository<WorkflowStep> WorkflowSteps { get; }
+        public IGenericRepository<WorkflowAction> WorkflowActions { get; }
+        public IGenericRepository<Notification> Notifications { get; }
+
         public async Task<int> SaveChangesAsync()
             => await _context.SaveChangesAsync();
 

@@ -5,6 +5,7 @@ using InTagEntitiesLayer.Interfaces;
 using InTagEntitiesLayer.Inventory;
 using InTagEntitiesLayer.Maintenance;
 using InTagEntitiesLayer.Manufacturing;
+using InTagEntitiesLayer.Workflow;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -69,6 +70,12 @@ namespace InTagDataLayer.Context
         public DbSet<CycleCount> CycleCounts => Set<CycleCount>();
         public DbSet<CycleCountLine> CycleCountLines => Set<CycleCountLine>();
 
+        // Workflow Module
+        public DbSet<WorkflowDefinition> WorkflowDefinitions => Set<WorkflowDefinition>();
+        public DbSet<WorkflowStep> WorkflowSteps => Set<WorkflowStep>();
+        public DbSet<WorkflowInstance> WorkflowInstances => Set<WorkflowInstance>();
+        public DbSet<WorkflowAction> WorkflowActions => Set<WorkflowAction>();
+        public DbSet<Notification> Notifications => Set<Notification>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
