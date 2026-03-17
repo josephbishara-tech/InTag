@@ -26,6 +26,7 @@ namespace InTagEntitiesLayer.Asset
 
         public int? ParentLocationId { get; set; }
 
+
         // Navigation
         public Location? ParentLocation { get; set; }
         public ICollection<Location> ChildLocations { get; set; } = new List<Location>();

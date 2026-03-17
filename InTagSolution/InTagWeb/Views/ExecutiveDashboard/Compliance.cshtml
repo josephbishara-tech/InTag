@@ -1,0 +1,62 @@
+@model InTagViewModelLayer.Integration.ComplianceReportVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-shield-check me-2"></i>Compliance Report</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Dashboard</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm text-center border-start border-4 @(Model.OverallComplianceScore >= 90 ? "border-success" : Model.OverallComplianceScore >= 70 ? "border-warning" : "border-danger")">
+            <div class="card-body py-3">
+                <small class="text-muted">Overall Compliance Score</small>
+                <h1 class="fw-bold mb-0 @(Model.OverallComplianceScore >= 90 ? "text-success" : Model.OverallComplianceScore >= 70 ? "text-warning" : "text-danger")">@Model.OverallComplianceScore%</h1>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-3"><small class="text-muted">Modules Checked</small><h3 class="fw-bold mb-0">@Model.Modules.Count</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-3"><small class="text-muted">Open Issues</small><h3 class="fw-bold text-danger mb-0">@Model.Issues.Count</h3></div></div></div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">By Module</h6></div>
+            <div class="card-body">
+                @foreach (var m in Model.Modules)
+                {
+                    var color = m.Score >= 90 ? "bg-success" : m.Score >= 70 ? "bg-warning" : "bg-danger";
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold">@m.Module</span>
+                        <span>@m.PassedChecks / @m.TotalChecks passed <strong class="ms-2">@m.Score%</strong></span>
+                    </div>
+                    <div class="progress mb-3" style="height:8px;"><div class="progress-bar @color" style="width:@m.Score%"></div></div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Compliance Issues</h6></div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Module</th><th>Severity</th><th>Issue</th><th></th></tr></thead>
+                    <tbody>
+                        @if (!Model.Issues.Any())
+                        {
+                            <tr><td colspan="4" class="text-center text-muted py-3">No compliance issues.</td></tr>
+                        }
+                        @foreach (var issue in Model.Issues)
+                        {
+                            var sBadge = issue.Severity switch { "Critical" => "bg-danger", "High" => "bg-warning text-dark", _ => "bg-info" };
+                            <tr><td class="fw-bold">@issue.Module</td><td><span class="badge @sBadge">@issue.Severity</span></td><td>@issue.Description</td><td>@if (!string.IsNullOrEmpty(issue.ActionUrl)) {
+                                <a href="@issue.ActionUrl" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-right"></i></a>
+                            }
+                        </td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</div>

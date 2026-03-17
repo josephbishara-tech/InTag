@@ -1,0 +1,39 @@
+@model IEnumerable<InTagEntitiesLayer.Asset.Vendor>
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-truck me-2"></i>Vendors</h1>
+    <a asp-action="CreateVendor" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>New Vendor</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Code</th><th>Name</th><th>Contact</th><th>Email</th><th>Phone</th><th>Website</th><th></th></tr></thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">No vendors. <a asp-action="CreateVendor">Create one</a>.</td></tr>
+                }
+                @foreach (var v in Model)
+                {
+                    <tr>
+                        <td class="fw-bold">@(v.Code ?? "—")</td>
+                        <td>@v.Name</td>
+                        <td>@(v.ContactPerson ?? "—")</td>
+                        <td><small>@v.Email</small></td>
+                        <td><small>@v.Phone</small></td>
+                        <td>@if (!string.IsNullOrEmpty(v.Website)) {
+                            <a href="@v.Website" target="_blank" class="small">@v.Website</a>
+                        } else
+                        {
+
+                            <small class="text-muted">—</small>
+                        }
+                    </td>
+                    <td><a asp-action="EditVendor" asp-route-id="@v.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+</div>

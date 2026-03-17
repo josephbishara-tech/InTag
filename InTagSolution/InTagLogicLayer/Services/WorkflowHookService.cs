@@ -1,210 +1,201 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using InTagEntitiesLayer.Enums;
 using InTagEntitiesLayer.Interfaces;
+using InTagLogicLayer.Workflow;
 
 namespace InTagLogicLayer.Services
 {
-    /// <summary>
-    /// Placeholder workflow hook service — events are logged now
-    /// and will trigger actual workflow engine in Phase 6.
-    /// </summary>
     public class WorkflowHookService : IWorkflowHook
     {
         private readonly ILogger<WorkflowHookService> _logger;
+        private readonly IServiceProvider _serviceProvider;
 
-        public WorkflowHookService(ILogger<WorkflowHookService> logger)
+        public WorkflowHookService(ILogger<WorkflowHookService> logger, IServiceProvider serviceProvider)
         {
             _logger = logger;
+            _serviceProvider = serviceProvider;
         }
 
-        // workflow hooks for asset lifecycle events
-        public Task OnAssetStatusChangedAsync(int assetId, string oldStatus, string newStatus)
-        {
-            _logger.LogInformation(
-                "[WorkflowHook] Asset {AssetId} status changed: {Old} → {New}",
-                assetId, oldStatus, newStatus);
+        // ── Asset Events ─────────────────────
 
-            // Phase 6: Trigger approval workflow for decommission/disposal
-            // Phase 6: Send notifications to asset managers
-            return Task.CompletedTask;
+        public async Task OnAssetStatusChangedAsync(int assetId, string oldStatus, string newStatus)
+        {
+            _logger.LogInformation("[Hook] Asset {Id} status: {Old} → {New}", assetId, oldStatus, newStatus);
+            if (newStatus is "Decommissioned" or "Disposed")
+                await TryStartWorkflowAsync(WorkflowCategory.AssetDisposal, "Asset", assetId, $"Asset #{assetId}");
         }
 
-        public Task OnAssetTransferredAsync(int assetId, int fromLocationId, int toLocationId)
+        public async Task OnAssetTransferredAsync(int assetId, int fromLocationId, int toLocationId)
         {
-            _logger.LogInformation(
-                "[WorkflowHook] Asset {AssetId} transferred: Location {From} → {To}",
-                assetId, fromLocationId, toLocationId);
-
-            // Phase 6: Trigger transfer approval workflow
-            // Phase 6: Notify receiving location manager
-            return Task.CompletedTask;
+            _logger.LogInformation("[Hook] Asset {Id} transferred: {From} → {To}", assetId, fromLocationId, toLocationId);
+            await TryStartWorkflowAsync(WorkflowCategory.AssetTransfer, "Asset", assetId, $"Asset #{assetId}");
         }
 
         public Task OnInspectionCompletedAsync(int assetId, int inspectionId, string conditionScore)
         {
-            _logger.LogInformation(
-                "[WorkflowHook] Inspection {InspectionId} completed for Asset {AssetId}: {Score}",
-                inspectionId, assetId, conditionScore);
-
-            // Phase 6: If condition is Poor/Critical, trigger maintenance work order
-            // Phase 4 (CMMS): Auto-create work order for poor condition
+            _logger.LogInformation("[Hook] Inspection {InspId} for asset {AssetId}: {Score}", inspectionId, assetId, conditionScore);
             return Task.CompletedTask;
         }
 
         public Task OnDepreciationRunCompletedAsync(string period, int assetsProcessed, decimal totalAmount)
         {
-            _logger.LogInformation(
-                "[WorkflowHook] Depreciation run completed for {Period}: {Count} assets, {Amount:C}",
-                period, assetsProcessed, totalAmount);
-
-            // Phase 6: Notify finance team
-            // Phase 6: Trigger approval for posting depreciation entries
+            _logger.LogInformation("[Hook] Depreciation {Period}: {Count} assets, {Amount:C}", period, assetsProcessed, totalAmount);
             return Task.CompletedTask;
         }
 
-        // workflow hooks for document lifecycle events
-        public Task OnDocumentPublishedAsync(int documentId, string docNumber)
+        // ── Document Events ──────────────────
+
+        public async Task OnDocumentPublishedAsync(int documentId, string docNumber)
         {
-            _logger.LogInformation("[WorkflowHook] Document {DocNumber} published (ID: {Id})", docNumber, documentId);
-            // Phase 6: Trigger controlled distribution workflow
-            // Phase 6: Notify document owner and department
-            return Task.CompletedTask;
+            _logger.LogInformation("[Hook] Document {Doc} published", docNumber);
+            await SendNotificationAsync(Guid.Empty, $"Document Published: {docNumber}",
+                $"Document {docNumber} has been published and is now effective.", $"/Document/Details/{documentId}");
         }
 
         public Task OnDocumentReviewDueAsync(int documentId, string docNumber, DateTimeOffset dueDate)
         {
-            _logger.LogInformation("[WorkflowHook] Document {DocNumber} review due: {DueDate}", docNumber, dueDate);
-            // Phase 6: Send review reminder to document owner
-            // Phase 6: Escalate if overdue past threshold
+            _logger.LogWarning("[Hook] Document {Doc} review due: {Date}", docNumber, dueDate);
             return Task.CompletedTask;
         }
 
         public Task OnRevisionApprovedAsync(int documentId, string docNumber, string revisionNumber)
         {
-            _logger.LogInformation("[WorkflowHook] Revision {Rev} approved for {DocNumber}", revisionNumber, docNumber);
-            // Phase 6: Trigger next approval level if multi-level
-            // Phase 6: Notify author
+            _logger.LogInformation("[Hook] Revision {Rev} approved for {Doc}", revisionNumber, docNumber);
             return Task.CompletedTask;
         }
 
         public Task OnRevisionRejectedAsync(int documentId, string docNumber, string revisionNumber)
         {
-            _logger.LogInformation("[WorkflowHook] Revision {Rev} rejected for {DocNumber}", revisionNumber, docNumber);
-            // Phase 6: Notify author to revise
+            _logger.LogWarning("[Hook] Revision {Rev} rejected for {Doc}", revisionNumber, docNumber);
             return Task.CompletedTask;
         }
 
         public Task OnDocumentDistributedAsync(int documentId, string docNumber, string recipientName)
         {
-            _logger.LogInformation("[WorkflowHook] Document {DocNumber} distributed to {Recipient}", docNumber, recipientName);
-            // Phase 6: Send notification to recipient
-            // Phase 6: Track acknowledgment deadline
+            _logger.LogInformation("[Hook] Document {Doc} distributed to {Recipient}", docNumber, recipientName);
             return Task.CompletedTask;
         }
 
-        // workflow hooks for manufacturing events
-        public Task OnProductionOrderStatusChangedAsync(int orderId, string orderNumber, string oldStatus, string newStatus)
+        // ── Manufacturing Events ─────────────
+
+        public async Task OnProductionOrderStatusChangedAsync(int orderId, string orderNumber, string oldStatus, string newStatus)
         {
-            _logger.LogInformation("[WorkflowHook] Production order {Number} status: {Old} → {New}",
-                orderNumber, oldStatus, newStatus);
-            // Phase 6: Trigger approval for release
-            // Phase 6: Notify production manager on completion
-            return Task.CompletedTask;
+            _logger.LogInformation("[Hook] Order {Number}: {Old} → {New}", orderNumber, oldStatus, newStatus);
+            if (newStatus == "Released")
+                await TryStartWorkflowAsync(WorkflowCategory.ProductionRelease, "ProductionOrder", orderId, orderNumber);
         }
 
-        public Task OnQualityCheckFailedAsync(int orderId, string orderNumber, string checkName)
+        public async Task OnQualityCheckFailedAsync(int orderId, string orderNumber, string checkName)
         {
-            _logger.LogWarning("[WorkflowHook] Quality check FAILED — Order {Number}, Check: {Check}",
-                orderNumber, checkName);
-            // Phase 6: Trigger non-conformance workflow
-            // Phase 6: Notify quality manager
-            return Task.CompletedTask;
+            _logger.LogWarning("[Hook] QC FAILED — Order {Number}, Check: {Check}", orderNumber, checkName);
+            await SendNotificationAsync(Guid.Empty, $"Quality Failure: {orderNumber}",
+                $"Quality check '{checkName}' failed on production order {orderNumber}.", $"/Production/Details/{orderId}");
         }
 
         public Task OnLotQuarantinedAsync(int lotId, string lotNumber, string productName)
         {
-            _logger.LogWarning("[WorkflowHook] Lot {LotNumber} ({Product}) quarantined",
-                lotNumber, productName);
-            // Phase 6: Trigger quarantine review workflow
-            // Phase 6: Notify quality team
+            _logger.LogWarning("[Hook] Lot {Lot} ({Product}) quarantined", lotNumber, productName);
             return Task.CompletedTask;
         }
 
         public Task OnProductionOrderOverdueAsync(int orderId, string orderNumber, int daysOverdue)
         {
-            _logger.LogWarning("[WorkflowHook] Order {Number} is {Days} days overdue",
-                orderNumber, daysOverdue);
-            // Phase 6: Send escalation notification
-            // Phase 6: Flag on production manager dashboard
+            _logger.LogWarning("[Hook] Order {Number} overdue by {Days} days", orderNumber, daysOverdue);
             return Task.CompletedTask;
         }
 
-        // workflow hooks for maintenance events
+        // ── Maintenance Events ───────────────
+
         public Task OnWorkOrderStatusChangedAsync(int workOrderId, string workOrderNumber, string oldStatus, string newStatus)
         {
-            _logger.LogInformation("[WorkflowHook] Work order {Number} status: {Old} → {New}", workOrderNumber, oldStatus, newStatus);
+            _logger.LogInformation("[Hook] WO {Number}: {Old} → {New}", workOrderNumber, oldStatus, newStatus);
             return Task.CompletedTask;
         }
 
-        public Task OnWorkOrderSLABreachedAsync(int workOrderId, string workOrderNumber, decimal actualHours, decimal slaHours)
+        public async Task OnWorkOrderSLABreachedAsync(int workOrderId, string workOrderNumber, decimal actualHours, decimal slaHours)
         {
-            _logger.LogWarning("[WorkflowHook] SLA BREACHED — Work order {Number}: actual {Actual}h > SLA {SLA}h",
-                workOrderNumber, actualHours, slaHours);
-            return Task.CompletedTask;
+            _logger.LogWarning("[Hook] SLA BREACHED — WO {Number}: {Actual}h > {SLA}h", workOrderNumber, actualHours, slaHours);
+            await SendNotificationAsync(Guid.Empty, $"SLA Breached: {workOrderNumber}",
+                $"Work order {workOrderNumber} exceeded SLA target ({actualHours:N1}h vs {slaHours:N1}h).",
+                $"/WorkOrder/Details/{workOrderId}");
         }
 
         public Task OnPMWorkOrderGeneratedAsync(int workOrderId, string workOrderNumber, string scheduleName)
         {
-            _logger.LogInformation("[WorkflowHook] PM work order {Number} generated from schedule {PM}", workOrderNumber, scheduleName);
+            _logger.LogInformation("[Hook] PM WO {Number} from schedule {PM}", workOrderNumber, scheduleName);
             return Task.CompletedTask;
         }
 
         public Task OnWorkOrderOverdueAsync(int workOrderId, string workOrderNumber, int daysOverdue)
         {
-            _logger.LogWarning("[WorkflowHook] Work order {Number} is {Days} days overdue", workOrderNumber, daysOverdue);
-            // Phase 6: Send escalation to maintenance manager
+            _logger.LogWarning("[Hook] WO {Number} overdue by {Days} days", workOrderNumber, daysOverdue);
             return Task.CompletedTask;
         }
 
         public Task OnPMOverdueAsync(int scheduleId, string scheduleName, string assetCode, int daysOverdue)
         {
-            _logger.LogWarning("[WorkflowHook] PM schedule '{Name}' for {Asset} is {Days} days overdue",
-                scheduleName, assetCode, daysOverdue);
-            // Phase 6: Send PM compliance alert
+            _logger.LogWarning("[Hook] PM '{Name}' for {Asset} overdue by {Days} days", scheduleName, assetCode, daysOverdue);
             return Task.CompletedTask;
         }
 
         public Task OnCriticalWorkOrderCreatedAsync(int workOrderId, string workOrderNumber, string assetCode)
         {
-            _logger.LogWarning("[WorkflowHook] CRITICAL work order {Number} created for asset {Asset}",
-                workOrderNumber, assetCode);
-            // Phase 6: Immediate notification to maintenance lead
+            _logger.LogWarning("[Hook] CRITICAL WO {Number} for asset {Asset}", workOrderNumber, assetCode);
             return Task.CompletedTask;
         }
 
-        public Task OnStockBelowReorderAsync(int stockItemId, string productCode, string warehouseCode, decimal quantity, decimal reorderPoint)
+        // ── Inventory Events ─────────────────
+
+        public async Task OnStockBelowReorderAsync(int stockItemId, string productCode, string warehouseCode, decimal quantity, decimal reorderPoint)
         {
-            _logger.LogWarning("[WorkflowHook] Stock below reorder — {Product} @ {WH}: {Qty} (reorder at {RP})",
-                productCode, warehouseCode, quantity, reorderPoint);
-            // Phase 6: Auto-generate purchase requisition
-            // Phase 6: Notify procurement
-            return Task.CompletedTask;
+            _logger.LogWarning("[Hook] Stock low — {Product} @ {WH}: {Qty} (reorder at {RP})", productCode, warehouseCode, quantity, reorderPoint);
+            await SendNotificationAsync(Guid.Empty, $"Low Stock: {productCode} @ {warehouseCode}",
+                $"Stock is at {quantity} units, below reorder point of {reorderPoint}.", $"/Inventory");
         }
 
         public Task OnStockExpiredAsync(int stockItemId, string productCode, string lotNumber, decimal quantity)
         {
-            _logger.LogWarning("[WorkflowHook] Stock EXPIRED — {Product} Lot {Lot}: {Qty} units",
-                productCode, lotNumber, quantity);
-            // Phase 6: Trigger quarantine workflow
-            // Phase 6: Notify quality team
+            _logger.LogWarning("[Hook] EXPIRED — {Product} Lot {Lot}: {Qty}", productCode, lotNumber, quantity);
             return Task.CompletedTask;
         }
 
         public Task OnCycleCountCompletedAsync(string countNumber, int variances, decimal totalVarianceQty)
         {
-            _logger.LogInformation("[WorkflowHook] Cycle count {Number} completed: {V} variances, {Qty} total variance",
-                countNumber, variances, totalVarianceQty);
-            // Phase 6: Notify warehouse manager if large variances
+            _logger.LogInformation("[Hook] Cycle count {Number}: {V} variances", countNumber, variances);
             return Task.CompletedTask;
+        }
+
+        // ── Helpers ──────────────────────────
+
+        private async Task TryStartWorkflowAsync(WorkflowCategory category, string entityType, int entityId, string? reference)
+        {
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var wfService = scope.ServiceProvider.GetService<IWorkflowService>();
+                if (wfService != null)
+                    await wfService.StartWorkflowByCategoryAsync(category, entityType, entityId, reference);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "No workflow triggered for {Category} on {EntityType}:{EntityId}", category, entityType, entityId);
+            }
+        }
+
+        private async Task SendNotificationAsync(Guid userId, string title, string message, string actionUrl)
+        {
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var notifService = scope.ServiceProvider.GetService<INotificationService>();
+                if (notifService != null)
+                    await notifService.SendAsync(userId, title, message, actionUrl, NotificationChannel.Both);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Failed to send notification: {Title}", title);
+            }
         }
     }
 }

@@ -1,0 +1,142 @@
+@model InTagViewModelLayer.Workflow.WorkflowInstanceDetailVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-arrow-repeat me-2"></i>@Model.InstanceNumber</h1>
+        <p class="text-muted mb-0">@Model.WorkflowName — @Model.EntityType: @Model.EntityReference</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <!-- Step Progress -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Workflow Progress</h6></div>
+            <div class="card-body">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    @foreach (var step in Model.AllSteps)
+                    {
+                        var actionForStep = Model.Actions.FirstOrDefault(a => a.StepOrder == step.StepOrder);
+                        var stepColor = actionForStep != null
+                        ? (actionForStep.Result == StepActionResult.Approved ? "bg-success" : actionForStep.Result == StepActionResult.Rejected ? "bg-danger" : "bg-warning text-dark")
+                        : step.StepOrder == Model.CurrentStepOrder && Model.Status == WorkflowInstanceStatus.InProgress ? "bg-primary"
+                        : "bg-light text-dark border";
+
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="text-center" style="min-width:80px;">
+                                <span class="badge @stepColor rounded-pill px-3 py-2">@step.StepOrder. @step.Name</span>
+                                <br /><small class="text-muted">@step.AssigneeRole</small>
+                                @if (actionForStep != null)
+                                {
+                                    <br />
+                                    <small class="@(actionForStep.Result == StepActionResult.Approved ? "text-success" : "text-danger")">@actionForStep.ResultDisplay</small>
+     }
+                            </div>
+                            @if (step != Model.AllSteps.Last())
+                            {
+                                <i class="bi bi-arrow-right text-muted"></i>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Form (if in progress) -->
+        @if (Model.Status == WorkflowInstanceStatus.InProgress && Model.CurrentStep != null)
+        {
+            <div class="card border-0 shadow-sm mb-3 border-start border-primary border-4">
+                <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Current Step: @Model.CurrentStep.Name <small class="text-muted">(@Model.CurrentStep.TypeDisplay — @Model.CurrentStep.AssigneeRole)</small></h6></div>
+                <div class="card-body">
+                    <form asp-action="SubmitAction" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="WorkflowInstanceId" value="@Model.Id" />
+                        <div class="mb-3"><label class="form-label">Comments</label><textarea name="Comments" class="form-control" rows="2" placeholder="Add comments..."></textarea></div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="submit" name="Action" value="@StepActionResult.Approved" class="btn btn-success"><i class="bi bi-check-circle me-1"></i>Approve</button>
+                            <button type="submit" name="Action" value="@StepActionResult.Rejected" class="btn btn-danger" onclick="return confirm('Reject this workflow?')"><i class="bi bi-x-circle me-1"></i>Reject</button>
+                            <button type="submit" name="Action" value="@StepActionResult.Delegated" class="btn btn-outline-info"><i class="bi bi-person-plus me-1"></i>Delegate</button>
+                            @if (Model.CurrentStep.EscalationHours.HasValue)
+                            {
+                                <button type="submit" name="Action" value="@StepActionResult.Escalated" class="btn btn-outline-warning"><i class="bi bi-arrow-up-circle me-1"></i>Escalate</button>
+                            }
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+
+        <!-- Audit Trail -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Audit Trail (@Model.Actions.Count)</h6></div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Step</th><th>Action</th><th>By</th><th>Date</th><th>Comments</th><th></th></tr></thead>
+                    <tbody>
+                        @if (!Model.Actions.Any())
+                        {
+                            <tr><td colspan="6" class="text-center text-muted py-3">No actions yet.</td></tr>
+                        }
+                        @foreach (var a in Model.Actions)
+                        {
+                            var rBadge = a.Result switch { StepActionResult.Approved => "bg-success", StepActionResult.Rejected => "bg-danger", StepActionResult.Delegated => "bg-info", StepActionResult.Escalated => "bg-warning text-dark", _ => "bg-secondary" };
+                            <tr>
+                                <td><span class="badge bg-primary rounded-pill">@a.StepOrder</span> @a.StepName</td>
+                                <td><span class="badge @rBadge">@a.ResultDisplay</span></td>
+                                <td>@(a.ActionByUserName ?? "System")</td>
+                                <td><small>@a.ActionDate.ToString("g")</small></td>
+                                <td><small class="text-muted">@a.Comments</small></td>
+                                <td>
+                                    @if (a.HasSignature)
+                                    {
+                                        <i class="bi bi-pen text-success" title="Signed"></i>
+                                    }
+                                    @if (!string.IsNullOrEmpty(a.DelegatedToUserName))
+                                    {
+                                        <small class="text-info">→ @a.DelegatedToUserName</small>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Details</h6></div>
+            <div class="card-body">
+                @{
+                    var instBadge = Model.Status switch { WorkflowInstanceStatus.InProgress => "bg-primary", WorkflowInstanceStatus.Completed => "bg-success", WorkflowInstanceStatus.Rejected => "bg-danger", _ => "bg-secondary" };
+                }
+                <div class="d-flex justify-content-between mb-2"><small class="text-muted">Status</small><span class="badge @instBadge">@Model.StatusDisplay</span></div>
+                <div class="d-flex justify-content-between mb-2"><small class="text-muted">Category</small><span class="badge bg-info">@Model.CategoryDisplay</span></div>
+                <div class="d-flex justify-content-between mb-2"><small class="text-muted">Entity</small><span>@Model.EntityType: @Model.EntityReference</span></div>
+                <div class="d-flex justify-content-between mb-2"><small class="text-muted">Progress</small><span>Step @Model.CurrentStepOrder of @Model.TotalSteps</span></div>
+                <div class="d-flex justify-content-between mb-2"><small class="text-muted">Started</small><small>@Model.CreatedDate.ToString("g")</small></div>
+                @if (Model.CompletedDate.HasValue)
+                {
+                    <div class="d-flex justify-content-between mb-2"><small class="text-muted">Completed</small><small>@Model.CompletedDate.Value.ToString("g")</small></div>
+                }
+            </div>
+        </div>
+
+        @if (Model.Status == WorkflowInstanceStatus.InProgress)
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body d-grid">
+                    <form asp-action="CancelInstance" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Cancel this workflow?')"><i class="bi bi-x-circle me-1"></i>Cancel Workflow</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>

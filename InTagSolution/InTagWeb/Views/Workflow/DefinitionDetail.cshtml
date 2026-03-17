@@ -1,0 +1,138 @@
+@model InTagViewModelLayer.Workflow.WorkflowDefinitionDetailVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-diagram-3 me-2"></i>@Model.Name</h1>
+        <p class="text-muted mb-0">@Model.CategoryDisplay — v@Model.Version @if (Model.AutoStart) {
+        <span class="badge bg-info ms-1">Auto-Start</span>
+                }
+</p>
+    </div>
+    <div class="d-flex gap-2">
+        @if (Model.Status == WorkflowStatus.Draft || Model.Status == WorkflowStatus.Inactive)
+        {
+            <form asp-action="ActivateDefinition" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-circle me-1"></i>Activate</button>
+            </form>
+        }
+        @if (Model.Status == WorkflowStatus.Active)
+        {
+            <form asp-action="DeactivateDefinition" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-pause-fill me-1"></i>Deactivate</button>
+            </form>
+        }
+        <a asp-action="Definitions" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm text-center">
+            <div class="card-body py-2">
+                <small class="text-muted">Status</small>
+                @{
+                    var sBadge = Model.Status switch { WorkflowStatus.Active => "bg-success", WorkflowStatus.Inactive => "bg-secondary", _ => "bg-warning text-dark" };
+                }
+                <h4><span class="badge @sBadge fs-6">@Model.StatusDisplay</span></h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Steps</small><h3 class="fw-bold mb-0">@Model.Steps.Count</h3></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Instances</small><h3 class="fw-bold mb-0">@Model.InstanceCount</h3></div></div></div>
+    <div class="col-md-3"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Module</small><h4 class="fw-bold mb-0">@(Model.Module ?? "All")</h4></div></div></div>
+</div>
+
+<!-- Steps -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Workflow Steps (@Model.Steps.Count)</h6></div>
+
+    <!-- Visual flow -->
+    <div class="card-body border-bottom">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+            @foreach (var step in Model.Steps)
+            {
+                var tColor = step.Type switch { StepType.Approval => "bg-primary", StepType.Review => "bg-info", StepType.Notification => "bg-warning text-dark", StepType.Condition => "bg-secondary", _ => "bg-light text-dark" };
+                <div class="d-flex align-items-center gap-2">
+                    <div class="text-center">
+                        <span class="badge @tColor rounded-pill px-3 py-2">@step.StepOrder. @step.Name</span>
+                        <br /><small class="text-muted">@step.AssigneeRole</small>
+                    </div>
+                    @if (step != Model.Steps.Last())
+                    {
+                        <i class="bi bi-arrow-right text-muted"></i>
+                    }
+                </div>
+            }
+            @if (!Model.Steps.Any())
+            {
+                <span class="text-muted">No steps defined. Add steps below.</span>
+            }
+        </div>
+    </div>
+
+    <!-- Steps table -->
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>#</th><th>Step</th><th>Type</th><th>Mode</th><th>Assignee Role</th><th>Escalation</th><th>Notify</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var step in Model.Steps)
+                {
+                    var tBadge = step.Type switch { StepType.Approval => "bg-primary", StepType.Review => "bg-info", StepType.Notification => "bg-warning text-dark", _ => "bg-secondary" };
+                    <tr>
+                        <td><span class="badge bg-primary rounded-pill">@step.StepOrder</span></td>
+                        <td class="fw-bold">@step.Name<br /><small class="text-muted">@step.Description</small></td>
+                        <td><span class="badge @tBadge">@step.TypeDisplay</span></td>
+                        <td><small>@step.ExecutionDisplay</small></td>
+                        <td class="fw-bold">@step.AssigneeRole</td>
+                        <td>@if (step.EscalationHours.HasValue) {
+                        <small>@step.EscalationHours h → @step.EscalationToRole</small>
+                    } else
+                    {
+
+                        <small class="text-muted">—</small>
+                    }
+</td>
+                    <td><small>@step.NotificationChannel</small></td>
+                    <td>
+                        @if (Model.Status != WorkflowStatus.Active)
+                        {
+                            <form asp-action="RemoveStep" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="stepId" value="@step.Id" />
+                                <input type="hidden" name="definitionId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+                                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Add step form -->
+    @if (Model.Status != WorkflowStatus.Active)
+    {
+        <div class="card-body border-top">
+            <h6 class="fw-bold mb-3">Add Step</h6>
+            <form asp-action="AddStep" method="post" class="row g-2 align-items-end">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="WorkflowDefinitionId" value="@Model.Id" />
+                <div class="col-md-1"><label class="form-label small">Order</label><input type="number" name="StepOrder" class="form-control form-control-sm" value="@((Model.Steps.Any() ? Model.Steps.Max(s => s.StepOrder) + 1 : 1))" /></div>
+                <div class="col-md-2"><label class="form-label small">Name</label><input type="text" name="Name" class="form-control form-control-sm" required /></div>
+                <div class="col-md-1"><label class="form-label small">Type</label><select name="Type" class="form-select form-select-sm" asp-items="ViewBag.StepTypes"></select></div>
+                <div class="col-md-1"><label class="form-label small">Mode</label><select name="ExecutionMode" class="form-select form-select-sm" asp-items="ViewBag.ExecutionModes"></select></div>
+                <div class="col-md-2"><label class="form-label small">Assignee Role</label><input type="text" name="AssigneeRole" class="form-control form-control-sm" placeholder="Manager" required /></div>
+                <div class="col-md-1"><label class="form-label small">Escalate (h)</label><input type="number" name="EscalationHours" class="form-control form-control-sm" /></div>
+                <div class="col-md-2"><label class="form-label small">Escalate To</label><input type="text" name="EscalationToRole" class="form-control form-control-sm" /></div>
+                <div class="col-md-1"><label class="form-label small">Notify</label><select name="NotificationChannel" class="form-select form-select-sm" asp-items="ViewBag.NotificationChannels"></select></div>
+                <div class="col-md-1"><button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-plus me-1"></i>Add</button></div>
+            </form>
+        </div>
+    }
+</div>

@@ -1,0 +1,41 @@
+@model InTagLogicLayer.Workflow.EscalationResultVm
+
+<div class="content-header"><h1><i class="bi bi-arrow-up-circle me-2"></i>Escalation Results</h1></div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Active Checked</small><h3 class="fw-bold mb-0">@Model.ProcessedCount</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center border-start border-warning border-4"><div class="card-body py-2"><small class="text-muted">Escalated</small><h3 class="fw-bold text-warning mb-0">@Model.EscalatedCount</h3></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">No Action Needed</small><h3 class="fw-bold text-success mb-0">@(Model.ProcessedCount - Model.EscalatedCount)</h3></div></div></div>
+</div>
+
+@if (Model.Items.Any())
+{
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Escalated Workflows</h6></div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light"><tr><th>Instance</th><th>Workflow</th><th>Step</th><th>Original Role</th><th>Escalated To</th><th class="text-end">Overdue (hrs)</th><th>Entity</th></tr></thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr class="table-warning">
+                            <td class="fw-bold">@item.InstanceNumber</td>
+                            <td>@item.WorkflowName</td>
+                            <td>@item.StepName</td>
+                            <td>@item.OriginalRole</td>
+                            <td class="fw-bold text-warning">@item.EscalatedToRole</td>
+                            <td class="text-end text-danger fw-bold">@item.HoursOverdue h</td>
+                            <td><small>@item.EntityReference</small></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-success"><i class="bi bi-check-circle me-1"></i>All workflows are within SLA. No escalations required.</div>
+}
+
+<div class="mt-3"><a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back to Workflows</a></div>

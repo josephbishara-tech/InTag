@@ -1,0 +1,71 @@
+@model InTagViewModelLayer.Workflow.WorkflowListResultVm
+@using InTagEntitiesLayer.Enums
+@{
+    var filter = ViewBag.CurrentFilter as InTagViewModelLayer.Workflow.WorkflowFilterVm;
+}
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-arrow-repeat me-2"></i>Workflow Instances</h1>
+    <a asp-action="StartWorkflow" class="btn btn-primary"><i class="bi bi-play-fill me-1"></i>Start Workflow</a>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3"><select name="Status" class="form-select form-select-sm" asp-items="ViewBag.Statuses"><option value="">All Statuses</option></select></div>
+            <div class="col-md-3"><select name="Category" class="form-select form-select-sm" asp-items="ViewBag.Categories"><option value="">All Categories</option></select></div>
+            <div class="col-md-2"><input type="text" name="EntityType" value="@filter?.EntityType" class="form-control form-control-sm" placeholder="Entity Type" /></div>
+            <div class="col-md-1"><button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-search"></i></button></div>
+            <div class="col-md-1"><a asp-action="Index" class="btn btn-sm btn-outline-secondary w-100">Clear</a></div>
+        </form>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><span class="small text-muted">@Model.TotalCount instance(s)</span></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Instance #</th><th>Workflow</th><th>Entity</th><th>Progress</th><th>Status</th><th>Started</th><th></th></tr></thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">No workflow instances.</td></tr>
+                }
+                @foreach (var i in Model.Items)
+                {
+                    var sBadge = i.Status switch { WorkflowInstanceStatus.InProgress => "bg-primary", WorkflowInstanceStatus.Completed => "bg-success", WorkflowInstanceStatus.Rejected => "bg-danger", WorkflowInstanceStatus.Cancelled => "bg-secondary", _ => "bg-warning text-dark" };
+                    var pct = i.TotalSteps > 0 ? (double)(i.CurrentStepOrder - 1) / i.TotalSteps * 100 : 0;
+                    if (i.Status == WorkflowInstanceStatus.Completed) pct = 100;
+                    <tr>
+                        <td><a asp-action="Instance" asp-route-id="@i.Id" class="fw-bold text-decoration-none">@i.InstanceNumber</a></td>
+                        <td>@i.WorkflowName<br /><small class="badge bg-info">@i.CategoryDisplay</small></td>
+                        <td>@i.EntityType<br /><small class="text-muted">@i.EntityReference</small></td>
+                        <td style="width:120px;">
+                            <div class="d-flex align-items-center gap-1">
+                                <div class="progress flex-grow-1" style="height:6px;"><div class="progress-bar" style="width:@pct%"></div></div>
+                                <small>@i.CurrentStepOrder/@i.TotalSteps</small>
+                            </div>
+                        </td>
+                        <td><span class="badge @sBadge">@i.StatusDisplay</span></td>
+                        <td><small>@i.CreatedDate.ToString("g")</small></td>
+                        <td><a asp-action="Instance" asp-route-id="@i.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.TotalPages > 1)
+    {
+        <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+            <span class="small text-muted">Page @Model.Page of @Model.TotalPages</span>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    @for (var p = Math.Max(1, Model.Page - 2); p <= Math.Min(Model.TotalPages, Model.Page + 2); p++)
+                    {
+                        <li class="page-item @(p == Model.Page ? "active" : "")"><a class="page-link" asp-action="Index" asp-route-Page="@p" asp-route-Status="@filter?.Status" asp-route-Category="@filter?.Category">@p</a></li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    }
+</div>

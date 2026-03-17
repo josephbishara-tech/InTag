@@ -1,0 +1,3 @@
+Add-Migration InitialCreateQuantityProduced -Project IdentechERPDataLayer -StartupProject IdentechERPWeb
+
+Update-Database -Project IdentechERPDataLayer -StartupProject IdentechERPWeb

@@ -1,0 +1,47 @@
+@model IReadOnlyList<InTagViewModelLayer.Workflow.NotificationVm>
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-bell me-2"></i>Notifications</h1>
+    @if (Model.Any(n => !n.IsRead))
+    {
+        <form asp-action="MarkAllRead" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-check-all me-1"></i>Mark All Read</button>
+        </form>
+    }
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <p class="text-muted text-center py-4">No notifications.</p>
+        }
+        @foreach (var n in Model)
+        {
+            <div class="d-flex align-items-start p-3 border-bottom @(!n.IsRead ? "bg-light" : "")">
+                <i class="bi @(!n.IsRead ? "bi-circle-fill text-primary" : "bi-circle text-muted") me-3 mt-1" style="font-size:0.5rem;"></i>
+                <div class="flex-grow-1">
+                    <strong>@n.Title</strong>
+                    @if (!string.IsNullOrEmpty(n.Message))
+                    {
+                        <p class="small text-muted mb-1">@n.Message</p>
+                    }
+                    <small class="text-muted">@n.CreatedDate.ToString("g")</small>
+                    @if (!string.IsNullOrEmpty(n.ActionUrl))
+                    {
+                        <a href="@n.ActionUrl" class="ms-2 small">View</a>
+                    }
+                </div>
+                @if (!n.IsRead)
+                {
+                    <form asp-action="MarkRead" method="post" class="ms-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="notificationId" value="@n.Id" />
+                        <button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-check"></i></button>
+                    </form>
+                }
+            </div>
+        }
+    </div>
+</div>

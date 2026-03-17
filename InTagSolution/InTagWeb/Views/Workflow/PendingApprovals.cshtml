@@ -1,0 +1,30 @@
+@model IReadOnlyList<InTagViewModelLayer.Workflow.WorkflowInstanceListVm>
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header"><h1><i class="bi bi-check-square me-2"></i>Pending Approvals</h1></div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Instance</th><th>Workflow</th><th>Entity</th><th>Step</th><th>Waiting Since</th><th></th></tr></thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-check-circle fs-3 text-success d-block mb-2"></i>No pending approvals. You're all caught up!</td></tr>
+                }
+                @foreach (var i in Model)
+                {
+                    var age = (int)(DateTimeOffset.UtcNow - i.CreatedDate).TotalDays;
+                    <tr>
+                        <td><a asp-action="Instance" asp-route-id="@i.Id" class="fw-bold text-decoration-none">@i.InstanceNumber</a></td>
+                        <td>@i.WorkflowName<br /><small class="badge bg-info">@i.CategoryDisplay</small></td>
+                        <td>@i.EntityType<br /><small class="text-muted">@i.EntityReference</small></td>
+                        <td>Step @i.CurrentStepOrder / @i.TotalSteps</td>
+                        <td><span class="badge @(age > 3 ? "bg-danger" : age > 1 ? "bg-warning text-dark" : "bg-secondary")">@age day(s)</span></td>
+                        <td><a asp-action="Instance" asp-route-id="@i.Id" class="btn btn-sm btn-primary"><i class="bi bi-check-circle me-1"></i>Review</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

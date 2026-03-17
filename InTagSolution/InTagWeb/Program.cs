@@ -22,8 +22,8 @@ builder.Services.AddInTagDocumentServices(builder.Configuration);
 builder.Services.AddInTagManufacturingServices();
 builder.Services.AddInTagMaintenanceServices();
 builder.Services.AddInTagInventoryServices();
-
-
+builder.Services.AddInTagWorkflowServices();
+builder.Services.AddInTagIntegrationServices();
 
 
 // ── DbContext (main tenant DB) ───────────

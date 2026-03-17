@@ -10,4 +10,8 @@
     <ProjectReference Include="..\InTagEntitiesLayer\InTagEntitiesLayer.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Identity\" />
+  </ItemGroup>
+
 </Project>

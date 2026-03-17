@@ -1,0 +1,120 @@
+@model InTagViewModelLayer.Integration.ExecutiveDashboardVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-speedometer me-2"></i>Executive Dashboard</h1>
+    <div class="d-flex gap-2">
+        <a asp-action="ExportExecutiveReport" class="btn btn-outline-primary btn-sm"><i class="bi bi-download me-1"></i>Export</a>
+        <a asp-action="Compliance" class="btn btn-outline-info btn-sm"><i class="bi bi-shield-check me-1"></i>Compliance</a>
+        <a asp-action="AuditTrail" class="btn btn-outline-secondary btn-sm"><i class="bi bi-journal-text me-1"></i>Audit Trail</a>
+    </div>
+</div>
+
+<!-- Module Cards -->
+<div class="row g-3 mb-4">
+    @foreach (var mod in Model.ModuleSummaries)
+    {
+        <div class="col-md-4 col-xl-2">
+            <a href="@mod.Url" class="text-decoration-none">
+                <div class="card border-0 shadow-sm h-100 text-center">
+                    <div class="card-body py-3">
+                        <div class="bg-@(mod.Color) bg-opacity-10 rounded-circle mx-auto d-flex align-items-center justify-content-center mb-2" style="width:48px;height:48px;">
+                            <i class="bi @mod.Icon fs-4 text-@(mod.Color)"></i>
+                        </div>
+                        <h4 class="fw-bold mb-0 text-@(mod.Color)">@mod.PrimaryMetric</h4>
+                        <small class="text-muted">@mod.PrimaryLabel</small>
+                        <hr class="my-1" />
+                        <strong>@mod.SecondaryMetric</strong><br />
+                        <small class="text-muted">@mod.SecondaryLabel</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+    }
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Critical Alerts -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent d-flex justify-content-between">
+                <h6 class="mb-0 fw-bold">Critical Alerts</h6>
+                @if (Model.CriticalAlerts.Any())
+                {
+                    <span class="badge bg-danger">@Model.CriticalAlerts.Count</span>
+                }
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.CriticalAlerts.Any())
+                {
+                    <p class="text-muted text-center py-4"><i class="bi bi-check-circle text-success fs-3 d-block mb-2"></i>All systems healthy.</p>
+                }
+                @foreach (var alert in Model.CriticalAlerts)
+                {
+                    <div class="d-flex align-items-start p-3 border-bottom">
+                        <i class="bi @alert.Icon @alert.Color me-3 mt-1 fs-5"></i>
+                        <div class="flex-grow-1">
+                            <strong>@alert.Title</strong> <span class="badge bg-light text-dark border ms-1">@alert.Module</span>
+                            <br /><small class="text-muted">@alert.Description</small>
+                        </div>
+                        @if (!string.IsNullOrEmpty(alert.ActionUrl))
+                        {
+                            <a href="@alert.ActionUrl" class="btn btn-sm btn-outline-primary ms-2">View</a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Compliance & Performance</h6></div>
+            <div class="card-body">
+                @{
+                    void MetricBar(string label, decimal value, string color)
+                    {
+                        <div class="d-flex justify-content-between mb-1"><small>@label</small><strong class="@(value < 80 ? "text-danger" : value < 90 ? "text-warning" : "text-success")">@value%</strong></div>
+                        <div class="progress mb-3" style="height:6px;"><div class="progress-bar bg-@color" style="width:@value%"></div></div>
+                    }
+
+                }
+                @{
+                    MetricBar("Document Compliance", Model.DocumentCompliancePercent, Model.DocumentCompliancePercent >= 90 ? "success" : "danger");
+                }
+                @{
+                    MetricBar("PM Compliance", Model.PMCompliancePercent, Model.PMCompliancePercent >= 90 ? "success" : "warning");
+                }
+                @{
+                    MetricBar("SLA Compliance", Model.SLACompliancePercent, Model.SLACompliancePercent >= 90 ? "success" : "warning");
+                }
+                @{
+                    MetricBar("Quality Pass Rate", Model.QualityPassRate, Model.QualityPassRate >= 95 ? "success" : "danger");
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cost Trend -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Monthly Maintenance Cost Trend</h6></div>
+    <div class="card-body">
+        @if (Model.MonthlyCostTrend.Any())
+        {
+            var maxCost = Model.MonthlyCostTrend.Max(c => c.MaintenanceCost);
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light"><tr><th>Period</th><th class="text-end">Maintenance Cost</th><th style="width:50%;">Trend</th></tr></thead>
+                    <tbody>
+                        @foreach (var c in Model.MonthlyCostTrend)
+                        {
+                            var barW = maxCost > 0 ? (double)(c.MaintenanceCost / maxCost * 100) : 0;
+                            <tr><td class="fw-bold">@c.Period</td><td class="text-end">@c.MaintenanceCost.ToString("C0")</td><td><div class="progress" style="height:14px;"><div class="progress-bar bg-primary" style="width:@barW%">@c.MaintenanceCost.ToString("C0")</div></div></td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

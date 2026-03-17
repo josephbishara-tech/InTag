@@ -16,7 +16,7 @@ namespace InTagEntitiesLayer.Asset
         public string? Description { get; set; }
 
         public int? ParentDepartmentId { get; set; }
-
+       
         // Navigation
         public Department? ParentDepartment { get; set; }
         public ICollection<Department> ChildDepartments { get; set; } = new List<Department>();

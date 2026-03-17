@@ -1,0 +1,41 @@
+@model IReadOnlyList<InTagViewModelLayer.Workflow.WorkflowDefinitionListVm>
+@using InTagEntitiesLayer.Enums
+
+<div class="d-flex gap-2">
+    <form asp-action="RunEscalations" method="post">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-outline-warning btn-sm"><i class="bi bi-arrow-up-circle me-1"></i>Run Escalations</button>
+    </form>
+    <form asp-action="SeedTemplates" method="post">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-outline-info btn-sm"><i class="bi bi-collection me-1"></i>Seed Templates</button>
+    </form>
+    <a asp-action="CreateDefinition" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>New Workflow</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Name</th><th>Category</th><th>Version</th><th class="text-end">Steps</th><th class="text-end">Instances</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">No workflows defined. <a asp-action="CreateDefinition">Create one</a>.</td></tr>
+                }
+                @foreach (var d in Model)
+                {
+                    var sBadge = d.Status switch { WorkflowStatus.Active => "bg-success", WorkflowStatus.Inactive => "bg-secondary", _ => "bg-warning text-dark" };
+                    <tr>
+                        <td><a asp-action="DefinitionDetail" asp-route-id="@d.Id" class="fw-bold text-decoration-none">@d.Name</a></td>
+                        <td><span class="badge bg-info">@d.CategoryDisplay</span></td>
+                        <td><span class="badge bg-light text-dark">v@d.Version</span></td>
+                        <td class="text-end">@d.StepCount</td>
+                        <td class="text-end">@d.InstanceCount</td>
+                        <td><span class="badge @sBadge">@d.StatusDisplay</span></td>
+                        <td><a asp-action="DefinitionDetail" asp-route-id="@d.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
