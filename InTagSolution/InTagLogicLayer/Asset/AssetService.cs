@@ -475,7 +475,11 @@ namespace InTagLogicLayer.Asset
             {
                 Id = t.Id,
                 Name = t.Name,
-                Category = t.Category.ToString()
+                Description = t.Description,
+                DefaultDepreciationMethod = t.DefaultDepreciationMethod,
+                UsefulLifeMonths = t.UsefulLifeMonths,
+                Category = t.Category,
+                DefaultSalvageValuePercent = t.DefaultSalvageValuePercent
             }).ToList();
         }
 

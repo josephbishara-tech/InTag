@@ -1,32 +1,36 @@
+using System.IO.Compression;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using InTagEntitiesLayer.Enums;
 using InTagLogicLayer.Asset;
 using InTagLogicLayer.Document;
+using InTagRepositoryLayer.Common;
 using InTagViewModelLayer.Document;
 using InTagWeb.Filters;
 
 namespace InTagWeb.Controllers
 {
-    //[Authorize]
-    [AllowAnonymous]
+    [Authorize]
     [RequireModule(PlatformModule.Document)]
     public class DocumentController : Controller
     {
         private readonly IDocumentService _docService;
-        private readonly IAssetService _assetService;
+        private readonly IAssetLookupService _lookupService;
         private readonly IDocumentFileService _fileService;
-
+        private readonly IUnitOfWork _uow;
 
         public DocumentController(
             IDocumentService docService,
-            IAssetService assetService,
-            IDocumentFileService fileService)
+            IAssetLookupService lookupService,
+            IDocumentFileService fileService,
+            IUnitOfWork uow)
         {
             _docService = docService;
-            _assetService = assetService;
+            _lookupService = lookupService;
             _fileService = fileService;
+            _uow = uow;
         }
 
         // GET: /Document
@@ -34,11 +38,9 @@ namespace InTagWeb.Controllers
         {
             ViewData["Title"] = "Documents";
             ViewData["Module"] = "Documents";
-
             var result = await _docService.GetAllAsync(filter);
             await PopulateFilterDropdowns();
             ViewBag.CurrentFilter = filter;
-
             return View(result);
         }
 
@@ -69,21 +71,14 @@ namespace InTagWeb.Controllers
             });
         }
 
-        // POST: /Document/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(DocumentCreateVm model)
         {
-            if (!ModelState.IsValid)
-            {
-                await PopulateFormDropdowns();
-                return View(model);
-            }
-
+            if (!ModelState.IsValid) { await PopulateFormDropdowns(); return View(model); }
             try
             {
                 var doc = await _docService.CreateAsync(model);
-                TempData["Success"] = $"Document '{doc.DocNumber}' created successfully.";
+                TempData["Success"] = $"Document '{doc.DocNumber}' created.";
                 return RedirectToAction(nameof(Details), new { id = doc.Id });
             }
             catch (InvalidOperationException ex)
@@ -105,7 +100,6 @@ namespace InTagWeb.Controllers
                 ViewBag.DocId = id;
                 ViewBag.DocNumber = doc.DocNumber;
                 await PopulateFormDropdowns();
-
                 return View(new DocumentUpdateVm
                 {
                     Title = doc.Title,
@@ -121,69 +115,43 @@ namespace InTagWeb.Controllers
             catch (KeyNotFoundException) { return NotFound(); }
         }
 
-        // POST: /Document/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, DocumentUpdateVm model)
         {
-            if (!ModelState.IsValid)
-            {
-                ViewBag.DocId = id;
-                await PopulateFormDropdowns();
-                return View(model);
-            }
-
+            if (!ModelState.IsValid) { ViewBag.DocId = id; await PopulateFormDropdowns(); return View(model); }
             try
             {
                 await _docService.UpdateAsync(id, model);
-                TempData["Success"] = "Document updated successfully.";
+                TempData["Success"] = "Document updated.";
                 return RedirectToAction(nameof(Details), new { id });
             }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
             {
                 ModelState.AddModelError("", ex.Message);
-                ViewBag.DocId = id;
-                await PopulateFormDropdowns();
+                ViewBag.DocId = id; await PopulateFormDropdowns();
                 return View(model);
             }
         }
 
-        // POST: /Document/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            try
-            {
-                await _docService.SoftDeleteAsync(id);
-                TempData["Success"] = "Document deleted.";
-                return RedirectToAction(nameof(Index));
-            }
+            try { await _docService.SoftDeleteAsync(id); TempData["Success"] = "Document deleted."; return RedirectToAction(nameof(Index)); }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
-            {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Details), new { id });
-            }
+            { TempData["Error"] = ex.Message; return RedirectToAction(nameof(Details), new { id }); }
         }
 
         // ── Check-in / Check-out ─────────────
 
-        // POST: /Document/CheckOut/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> CheckOut(int id)
         {
-            try
-            {
-                await _docService.CheckOutAsync(id);
-                TempData["Success"] = "Document checked out.";
-            }
+            try { await _docService.CheckOutAsync(id); TempData["Success"] = "Document checked out. Download the files below to begin editing."; }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
             { TempData["Error"] = ex.Message; }
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // GET: /Document/CheckIn/5
         public async Task<IActionResult> CheckIn(int id)
         {
             try
@@ -197,9 +165,7 @@ namespace InTagWeb.Controllers
             catch (KeyNotFoundException) { return NotFound(); }
         }
 
-        // POST: /Document/CheckIn/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> CheckIn(int id, RevisionCreateVm model)
         {
             if (!ModelState.IsValid)
@@ -208,7 +174,6 @@ namespace InTagWeb.Controllers
                 ViewBag.Document = doc;
                 return View(model);
             }
-
             try
             {
                 model.DocumentId = id;
@@ -217,22 +182,13 @@ namespace InTagWeb.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
-            {
-                TempData["Error"] = ex.Message;
-                return RedirectToAction(nameof(Details), new { id });
-            }
+            { TempData["Error"] = ex.Message; return RedirectToAction(nameof(Details), new { id }); }
         }
 
-        // POST: /Document/CancelCheckOut/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> CancelCheckOut(int id)
         {
-            try
-            {
-                await _docService.CancelCheckOutAsync(id);
-                TempData["Success"] = "Check-out cancelled.";
-            }
+            try { await _docService.CancelCheckOutAsync(id); TempData["Success"] = "Check-out cancelled."; }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
             { TempData["Error"] = ex.Message; }
             return RedirectToAction(nameof(Details), new { id });
@@ -240,46 +196,28 @@ namespace InTagWeb.Controllers
 
         // ── Lifecycle ────────────────────────
 
-        // POST: /Document/Publish/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Publish(int id)
         {
-            try
-            {
-                await _docService.PublishAsync(id);
-                TempData["Success"] = "Document published.";
-            }
+            try { await _docService.PublishAsync(id); TempData["Success"] = "Document published."; }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
             { TempData["Error"] = ex.Message; }
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // POST: /Document/Obsolete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Obsolete(int id)
         {
-            try
-            {
-                await _docService.ObsoleteAsync(id);
-                TempData["Success"] = "Document marked obsolete.";
-            }
+            try { await _docService.ObsoleteAsync(id); TempData["Success"] = "Document marked obsolete."; }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
             { TempData["Error"] = ex.Message; }
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // POST: /Document/Archive/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Archive(int id)
         {
-            try
-            {
-                await _docService.ArchiveAsync(id);
-                TempData["Success"] = "Document archived.";
-            }
+            try { await _docService.ArchiveAsync(id); TempData["Success"] = "Document archived."; }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
             { TempData["Error"] = ex.Message; }
             return RedirectToAction(nameof(Details), new { id });
@@ -287,24 +225,16 @@ namespace InTagWeb.Controllers
 
         // ── Revisions & Approval ─────────────
 
-        // POST: /Document/CreateRevision
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateRevision(RevisionCreateVm model)
         {
-            try
-            {
-                await _docService.CreateRevisionAsync(model);
-                TempData["Success"] = "New revision created.";
-            }
+            try { await _docService.CreateRevisionAsync(model); TempData["Success"] = "New revision created."; }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
             { TempData["Error"] = ex.Message; }
             return RedirectToAction(nameof(Details), new { id = model.DocumentId });
         }
 
-        // POST: /Document/ApproveRevision
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveRevision(RevisionApprovalVm model, int documentId)
         {
             try
@@ -319,59 +249,27 @@ namespace InTagWeb.Controllers
 
         // ── Distribution ─────────────────────
 
-        // POST: /Document/Distribute
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Distribute(DistributionCreateVm model)
         {
-            try
-            {
-                await _docService.DistributeAsync(model);
-                TempData["Success"] = "Document distributed.";
-            }
+            try { await _docService.DistributeAsync(model); TempData["Success"] = "Document distributed."; }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
             { TempData["Error"] = ex.Message; }
             return RedirectToAction(nameof(Details), new { id = model.DocumentId });
         }
 
-        // POST: /Document/Acknowledge/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> Acknowledge(int distributionId, int documentId)
         {
-            try
-            {
-                await _docService.AcknowledgeDistributionAsync(distributionId);
-                TempData["Success"] = "Acknowledged.";
-            }
+            try { await _docService.AcknowledgeDistributionAsync(distributionId); TempData["Success"] = "Acknowledged."; }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
             { TempData["Error"] = ex.Message; }
             return RedirectToAction(nameof(Details), new { id = documentId });
         }
 
-        // ── Helpers ──────────────────────────
+        // ── File Upload / Download ───────────
 
-        private async Task PopulateFilterDropdowns()
-        {
-            ViewBag.Departments = new SelectList(await _assetService.GetDepartmentsAsync(), "Id", "Name");
-            ViewBag.Statuses = new SelectList(Enum.GetValues<DocumentStatus>());
-            ViewBag.Types = new SelectList(Enum.GetValues<DocumentType>());
-            ViewBag.Categories = new SelectList(Enum.GetValues<DocumentCategory>());
-        }
-
-        private async Task PopulateFormDropdowns()
-        {
-            ViewBag.Departments = new SelectList(await _assetService.GetDepartmentsAsync(), "Id", "Name");
-            ViewBag.Types = new SelectList(Enum.GetValues<DocumentType>());
-            ViewBag.Categories = new SelectList(Enum.GetValues<DocumentCategory>());
-            ViewBag.ReviewCycles = new SelectList(Enum.GetValues<ReviewCycle>());
-        }
-
-        // -- File upload/download actions would go here, but are omitted for brevity.
-
-        // POST: /Document/UploadFile
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadFile(int revisionId, int documentId, IFormFile file)
         {
             try
@@ -380,13 +278,11 @@ namespace InTagWeb.Controllers
                 TempData["Success"] = $"File '{result.FileName}' uploaded ({result.FileSize / 1024} KB).";
             }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
-            {
-                TempData["Error"] = ex.Message;
-            }
+            { TempData["Error"] = ex.Message; }
             return RedirectToAction(nameof(Details), new { id = documentId });
         }
 
-        // GET: /Document/DownloadFile/5
+        // GET: /Document/DownloadFile?fileId=5
         public async Task<IActionResult> DownloadFile(int fileId)
         {
             try
@@ -394,26 +290,47 @@ namespace InTagWeb.Controllers
                 var result = await _fileService.DownloadFileAsync(fileId);
                 return File(result.Content, result.ContentType, result.FileName);
             }
-            catch (KeyNotFoundException)
-            {
-                return NotFound();
-            }
+            catch (KeyNotFoundException) { return NotFound(); }
         }
 
-        // POST: /Document/DeleteFile
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // GET: /Document/DownloadRevisionFiles?revisionId=5
+        public async Task<IActionResult> DownloadRevisionFiles(int revisionId)
+        {
+            var files = await _uow.DocumentFiles.Query()
+                .Where(f => f.RevisionId == revisionId)
+                .ToListAsync();
+
+            if (!files.Any()) return NotFound("No files in this revision.");
+
+            // Single file — download directly
+            if (files.Count == 1)
+            {
+                var result = await _fileService.DownloadFileAsync(files.First().Id);
+                return File(result.Content, result.ContentType, result.FileName);
+            }
+
+            // Multiple files — ZIP
+            var zipStream = new MemoryStream();
+            using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                foreach (var file in files)
+                {
+                    var download = await _fileService.DownloadFileAsync(file.Id);
+                    var entry = archive.CreateEntry(file.FileName, CompressionLevel.Optimal);
+                    using var entryStream = entry.Open();
+                    await download.Content.CopyToAsync(entryStream);
+                }
+            }
+            zipStream.Position = 0;
+            return File(zipStream, "application/zip", $"revision_{revisionId}_files.zip");
+        }
+
+        [HttpPost, ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteFile(int fileId, int documentId)
         {
-            try
-            {
-                await _fileService.DeleteFileAsync(fileId);
-                TempData["Success"] = "File deleted.";
-            }
+            try { await _fileService.DeleteFileAsync(fileId); TempData["Success"] = "File deleted."; }
             catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
-            {
-                TempData["Error"] = ex.Message;
-            }
+            { TempData["Error"] = ex.Message; }
             return RedirectToAction(nameof(Details), new { id = documentId });
         }
 
@@ -423,14 +340,27 @@ namespace InTagWeb.Controllers
             ViewData["Title"] = "Document Search";
             ViewData["Module"] = "Documents";
             ViewBag.SearchTerm = q;
-
-            if (string.IsNullOrWhiteSpace(q))
-                return View(new DocumentSearchResultVm());
-
+            if (string.IsNullOrWhiteSpace(q)) return View(new DocumentSearchResultVm());
             var result = await _fileService.FullTextSearchAsync(q, page, 25);
             return View(result);
         }
 
+        // ── Helpers ──────────────────────────
 
+        private async Task PopulateFilterDropdowns()
+        {
+            ViewBag.Departments = new SelectList(await _lookupService.GetDepartmentsAsync(), "Id", "Name");
+            ViewBag.Statuses = new SelectList(Enum.GetValues<DocumentStatus>());
+            ViewBag.Types = new SelectList(Enum.GetValues<DocumentType>());
+            ViewBag.Categories = new SelectList(Enum.GetValues<DocumentCategory>());
+        }
+
+        private async Task PopulateFormDropdowns()
+        {
+            ViewBag.Departments = new SelectList(await _lookupService.GetDepartmentsAsync(), "Id", "Name");
+            ViewBag.Types = new SelectList(Enum.GetValues<DocumentType>());
+            ViewBag.Categories = new SelectList(Enum.GetValues<DocumentCategory>());
+            ViewBag.ReviewCycles = new SelectList(Enum.GetValues<ReviewCycle>());
+        }
     }
 }

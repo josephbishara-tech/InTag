@@ -8,8 +8,8 @@ using InTagWeb.Filters;
 
 namespace InTagWeb.Controllers
 {
-    //[Authorize]
-    [AllowAnonymous]
+    [Authorize]
+    //[AllowAnonymous]
     [RequireModule(PlatformModule.Manufacturing)]
     public class ProductCatalogController : Controller
     {

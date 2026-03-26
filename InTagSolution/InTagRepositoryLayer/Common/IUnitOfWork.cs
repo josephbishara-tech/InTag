@@ -1,3 +1,4 @@
+using InTagEntitiesLayer.Asset;
 using InTagEntitiesLayer.Document;
 using InTagEntitiesLayer.Inventory;
 using InTagEntitiesLayer.Maintenance;
@@ -9,6 +10,7 @@ using InTagRepositoryLayer.Inventory;
 using InTagRepositoryLayer.Maintenance;
 using InTagRepositoryLayer.Manufacturing;
 using InTagRepositoryLayer.Workflow;
+
 
 
 namespace InTagRepositoryLayer.Common
@@ -24,6 +26,8 @@ namespace InTagRepositoryLayer.Common
         IGenericRepository<InTagEntitiesLayer.Asset.DepreciationRecord> DepreciationRecords { get; }
         IGenericRepository<InTagEntitiesLayer.Asset.AssetTransfer> AssetTransfers { get; }
         IGenericRepository<InTagEntitiesLayer.Asset.Inspection> Inspections { get; }
+        IGenericRepository<TrackingRequest> TrackingRequests { get; }
+        IGenericRepository<TrackingLine> TrackingLines { get; }
 
         // Document Module
         IDocumentRepository Documents { get; }
@@ -31,11 +35,16 @@ namespace InTagRepositoryLayer.Common
         IGenericRepository<DocumentFile> DocumentFiles { get; }
         IGenericRepository<ApprovalMatrix> ApprovalMatrices { get; }
         IGenericRepository<DistributionRecord> DistributionRecordsRepo { get; }
+        IGenericRepository<UserFolder> UserFolders { get; }
+        IGenericRepository<UserFile> UserFiles { get; }
+        IGenericRepository<InTagEntitiesLayer.Document.FileShare> FileShares { get; }
 
         // Manufacturing Module
         IProductionOrderRepository ProductionOrders { get; }
         IGenericRepository<Product> Products { get; }
-        IGenericRepository<WorkCenter> WorkCenters { get; }
+       // IGenericRepository<WorkCenter> WorkCenters { get; }
+        IWorkCenterRepository WorkCenters { get; }
+
         IGenericRepository<BillOfMaterial> BillOfMaterials { get; }
         IGenericRepository<BOMLine> BOMLines { get; }
         IGenericRepository<Routing> Routings { get; }
@@ -43,6 +52,7 @@ namespace InTagRepositoryLayer.Common
         IGenericRepository<ProductionLog> ProductionLogs { get; }
         IGenericRepository<LotBatch> LotBatches { get; }
         IGenericRepository<QualityCheck> QualityChecks { get; }
+     
 
         // Maintenance (CMMS) Module
         IWorkOrderRepository WorkOrders { get; }

@@ -1,4 +1,5 @@
 using InTagDataLayer.Context;
+using InTagEntitiesLayer.Asset;
 using InTagEntitiesLayer.Document;
 using InTagEntitiesLayer.Inventory;
 using InTagEntitiesLayer.Maintenance;
@@ -36,7 +37,8 @@ namespace InTagRepositoryLayer.Common
             DistributionRecordsRepo = new GenericRepository<DistributionRecord>(context);
             ProductionOrders = new ProductionOrderRepository(context);
             Products = new GenericRepository<Product>(context);
-            WorkCenters = new GenericRepository<WorkCenter>(context);
+            // WorkCenters = new GenericRepository<WorkCenter>(context);
+            WorkCenters = new WorkCenterRepository(context);
             BillOfMaterials = new GenericRepository<BillOfMaterial>(context);
             BOMLines = new GenericRepository<BOMLine>(context);
             Routings = new GenericRepository<Routing>(context);
@@ -60,6 +62,12 @@ namespace InTagRepositoryLayer.Common
             WorkflowSteps = new GenericRepository<WorkflowStep>(context);
             WorkflowActions = new GenericRepository<WorkflowAction>(context);
             Notifications = new GenericRepository<Notification>(context);
+            TrackingRequests = new GenericRepository<TrackingRequest>(context);
+            TrackingLines = new GenericRepository<TrackingLine>(context);
+            UserFolders = new GenericRepository<UserFolder>(context);
+            UserFiles = new GenericRepository<UserFile>(context);
+            FileShares = new GenericRepository<InTagEntitiesLayer.Document.FileShare>(context);
+
         }
 
 
@@ -73,6 +81,8 @@ namespace InTagRepositoryLayer.Common
         public IGenericRepository<InTagEntitiesLayer.Asset.DepreciationRecord> DepreciationRecords { get; }
         public IGenericRepository<InTagEntitiesLayer.Asset.AssetTransfer> AssetTransfers { get; }
         public IGenericRepository<InTagEntitiesLayer.Asset.Inspection> Inspections { get; }
+        public IGenericRepository<TrackingRequest> TrackingRequests { get; }
+        public IGenericRepository<TrackingLine> TrackingLines { get; }
 
         // Document Module
         public IDocumentRepository Documents { get; }
@@ -80,11 +90,15 @@ namespace InTagRepositoryLayer.Common
         public IGenericRepository<DocumentFile> DocumentFiles { get; }
         public IGenericRepository<ApprovalMatrix> ApprovalMatrices { get; }
         public IGenericRepository<DistributionRecord> DistributionRecordsRepo { get; }
+        public IGenericRepository<UserFolder> UserFolders { get; }
+        public IGenericRepository<UserFile> UserFiles { get; }
+        public IGenericRepository<InTagEntitiesLayer.Document.FileShare> FileShares { get; }
 
         // Manufacturing Module
         public IProductionOrderRepository ProductionOrders { get; }
         public IGenericRepository<Product> Products { get; }
-        public IGenericRepository<WorkCenter> WorkCenters { get; }
+       // public IGenericRepository<WorkCenter> WorkCenters { get; }
+        public IWorkCenterRepository WorkCenters { get; }
         public IGenericRepository<BillOfMaterial> BillOfMaterials { get; }
         public IGenericRepository<BOMLine> BOMLines { get; }
         public IGenericRepository<Routing> Routings { get; }
@@ -92,6 +106,8 @@ namespace InTagRepositoryLayer.Common
         public IGenericRepository<ProductionLog> ProductionLogs { get; }
         public IGenericRepository<LotBatch> LotBatches { get; }
         public IGenericRepository<QualityCheck> QualityChecks { get; }
+
+
 
         // Maintenance (CMMS) Module
         public IWorkOrderRepository WorkOrders { get; }

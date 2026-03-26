@@ -1,4 +1,4 @@
-﻿using InTagDataLayer.Context;
+using InTagDataLayer.Context;
 using InTagEntitiesLayer.Common;
 using InTagLogicLayer.Interfaces;
 using InTagViewModelLayer.Auth;
@@ -143,18 +143,15 @@ namespace InTagLogicLayer.Services
         private string GenerateAccessToken(ApplicationUser user, IList<string> roles)
         {
             var claims = new List<Claim>
-            {
-                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new(ClaimTypes.Email, user.Email!),
-                new("tenant_id", user.TenantId.ToString()),
-                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-            };
+    {
+        new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new(ClaimTypes.Email, user.Email!),
+        new(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
+        new("TenantId", user.TenantId.ToString()),
+    };
 
-            // Add role claims
             foreach (var role in roles)
-            {
                 claims.Add(new Claim(ClaimTypes.Role, role));
-            }
 
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
@@ -169,6 +166,8 @@ namespace InTagLogicLayer.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+         
 
         private async Task<string> GenerateRefreshTokenAsync(ApplicationUser user)
         {
@@ -215,5 +214,7 @@ namespace InTagLogicLayer.Services
 
             return principal;
         }
+
+
     }
 }

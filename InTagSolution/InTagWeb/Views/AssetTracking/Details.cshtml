@@ -1,0 +1,68 @@
+@model InTagViewModelLayer.Asset.TrackingRequestDetailVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div><h1><i class="bi bi-qr-code-scan me-2"></i>@Model.RequestNumber</h1><p class="text-muted mb-0">@Model.Title — @Model.LocationName</p></div>
+    <div class="d-flex gap-2">
+        @if (Model.Status == TrackingRequestStatus.Draft)
+        {
+            <form asp-action="Open" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-info btn-sm"><i class="bi bi-unlock me-1"></i>Open for Scanning</button>
+            </form>
+        }
+        @if (Model.Status == TrackingRequestStatus.InProgress)
+        {
+            <form asp-action="Complete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Complete tracking? Unscanned assets will be marked as Missing.')"><i class="bi bi-check-circle me-1"></i>Complete</button>
+            </form>
+        }
+        @if (Model.Status != TrackingRequestStatus.Completed && Model.Status != TrackingRequestStatus.Cancelled)
+        {
+            <form asp-action="Cancel" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Cancel this request?')"><i class="bi bi-x-circle me-1"></i>Cancel</button>
+            </form>
+        }
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+    </div>
+</div>
+
+<!-- KPIs -->
+<div class="row g-3 mb-3">
+    <div class="col-6 col-xl-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Total</small><h3 class="fw-bold mb-0">@Model.TotalAssets</h3></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Found</small><h3 class="fw-bold text-success mb-0">@Model.FoundCount</h3></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Missing</small><h3 class="fw-bold text-danger mb-0">@Model.MissingCount</h3></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Relocated</small><h3 class="fw-bold text-warning mb-0">@Model.RelocatedCount</h3></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card border-0 shadow-sm text-center"><div class="card-body py-2"><small class="text-muted">Damaged</small><h3 class="fw-bold text-danger mb-0">@Model.DamagedCount</h3></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card border-0 shadow-sm text-center border-start border-primary border-4"><div class="card-body py-2"><small class="text-muted">Progress</small><h3 class="fw-bold text-primary mb-0">@Model.ProgressPercent%</h3><div class="progress mt-1" style="height:4px;"><div class="progress-bar" style="width:@Model.ProgressPercent%"></div></div></div></div></div>
+</div>
+
+<!-- Asset Lines -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Assets (@Model.TotalAssets)</h6></div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Asset Code</th><th>Name</th><th>Status</th><th>Scanned</th><th>Condition</th><th>Found At</th><th>Remarks</th></tr></thead>
+            <tbody>
+                @foreach (var line in Model.Lines)
+                {
+                    var lBadge = line.Status switch { TrackingLineStatus.Found => "bg-success", TrackingLineStatus.Missing => "bg-danger", TrackingLineStatus.Relocated => "bg-warning text-dark", TrackingLineStatus.Damaged => "bg-danger", _ => "bg-secondary" };
+                    <tr class="@(line.Status == TrackingLineStatus.Missing ? "table-danger" : line.Status == TrackingLineStatus.Damaged ? "table-warning" : "")">
+                        <td><a asp-controller="Asset" asp-action="Details" asp-route-id="@line.AssetId" class="fw-bold text-decoration-none">@line.AssetCode</a></td>
+                        <td>@line.AssetName</td>
+                        <td><span class="badge @lBadge">@line.StatusDisplay</span></td>
+                        <td><small>@(line.ScannedDate?.ToString("g") ?? "—")</small></td>
+                        <td>@(line.Status != TrackingLineStatus.Pending ? line.ConditionAtScan.ToString() : "—")</td>
+                        <td><small>@(line.FoundAtLocationName ?? "—")</small></td>
+                        <td><small class="text-muted">@line.Remarks</small></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,109 @@
+@model InTagViewModelLayer.Document.FileShareCreateVm
+@using InTagEntitiesLayer.Enums
+@{
+    var shares = ViewBag.ExistingShares as IReadOnlyList<InTagViewModelLayer.Document.FileShareListVm>;
+}
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-share me-2"></i>Share File</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Share With</h6></div>
+            <div class="card-body">
+                <form asp-action="Share" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="UserFileId" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="TargetType" class="form-label">Share With</label>
+                        <select asp-for="TargetType" asp-items="@(new SelectList(Enum.GetValues<ShareTargetType>()))" class="form-select" id="targetType"></select>
+                    </div>
+                    <div class="mb-3" id="userField">
+                        <label class="form-label">User</label>
+                        <select asp-for="TargetUserId" asp-items="ViewBag.Users" class="form-select">
+                            <option value="">— Select User —</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 d-none" id="deptField">
+                        <label class="form-label">Department</label>
+                        <select asp-for="TargetDepartmentId" asp-items="ViewBag.Departments" class="form-select">
+                            <option value="">— Select Department —</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Permission" class="form-label">Permission</label>
+                        <select asp-for="Permission" asp-items="@(new SelectList(Enum.GetValues<SharePermission>()))" class="form-select"></select>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Message" class="form-label">Message (optional)</label>
+                        <textarea asp-for="Message" class="form-control" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="bi bi-share me-1"></i>Share</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Current Shares (@(shares?.Count ?? 0))</h6></div>
+            <div class="card-body p-0">
+                @if (shares != null && shares.Any())
+                {
+                    <table class="table table-sm mb-0 align-middle">
+                        <thead class="table-light"><tr><th>Shared With</th><th>Permission</th><th>Date</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var s in shares)
+                            {
+                                <tr>
+                                    <td>
+                                        <i class="bi @(s.TargetType == ShareTargetType.User ? "bi-person" : s.TargetType == ShareTargetType.Department ? "bi-building" : "bi-globe") me-1"></i>
+                                        @s.TargetName
+                                    </td>
+                                    <td><span class="badge bg-light text-dark">@s.Permission</span></td>
+                                    <td><small>@s.SharedDate.ToString("d")</small></td>
+                                    <td>
+                                        <form asp-action="RemoveShare" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="shareId" value="@s.ShareId" />
+                                            <input type="hidden" name="fileId" value="@Model.UserFileId" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove share?')">
+                                                <i class="bi bi-x-circle"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-3 mb-0">Not shared with anyone yet.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const targetType = document.getElementById('targetType');
+        const userField = document.getElementById('userField');
+        const deptField = document.getElementById('deptField');
+
+        function toggleFields() {
+            const val = targetType.options[targetType.selectedIndex].text;
+            userField.classList.toggle('d-none', val !== 'User');
+            deptField.classList.toggle('d-none', val !== 'Department');
+        }
+
+        targetType.addEventListener('change', toggleFields);
+        toggleFields();
+    </script>
+}

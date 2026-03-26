@@ -1,0 +1,45 @@
+@model IReadOnlyList<InTagViewModelLayer.Identity.UserProfileVm>
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-people me-2"></i>User Management</h1>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>New User</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light"><tr><th>Name</th><th>Email</th><th>Job Title</th><th>Role</th><th>Status</th><th>Last Login</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var u in Model)
+                {
+                    <tr class="@(!u.IsActive ? "table-secondary" : "")">
+                        <td class="fw-bold">@u.FullName</td>
+                        <td><small>@u.Email</small></td>
+                        @* <td><small>@(u.JobTitle ?? "—")</small></td> *@
+                        <td>
+                            @foreach (var role in u.Roles)
+                            {
+                                var rBadge = role switch { "Admin" => "bg-danger", "Manager" => "bg-primary", "Operator" => "bg-success", _ => "bg-secondary" };
+                                <span class="badge @rBadge">@role</span>
+                            }
+                        </td>
+                        <td>
+                            <form asp-action="ToggleActive" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@u.Id" />
+                                <button type="submit" class="btn btn-sm @(u.IsActive ? "btn-success" : "btn-outline-secondary")">@(u.IsActive ? "Active" : "Inactive")</button>
+                            </form>
+                        </td>
+                      @*   <td><small>@(u.LastLoginDate?.ToString("g") ?? "Never")</small></td> *@
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a asp-action="Edit" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
+                                <a asp-action="ResetPassword" asp-route-id="@u.Id" class="btn btn-sm btn-outline-warning"><i class="bi bi-key"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

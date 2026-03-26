@@ -1,23 +1,23 @@
+using InTagEntitiesLayer.Enums;
+using InTagLogicLayer.Asset;
+using InTagViewModelLayer.Asset;
+using InTagWeb.Filters;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using InTagEntitiesLayer.Asset;
-using InTagEntitiesLayer.Enums;
-using InTagRepositoryLayer.Common;
-using InTagWeb.Filters;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace InTagWeb.Controllers
 {
-    //[Authorize]
-    [AllowAnonymous]
+    //[AllowAnonymous]
+    [Authorize]
     [RequireModule(PlatformModule.Asset)]
     public class AssetLookupController : Controller
     {
-        private readonly IUnitOfWork _uow;
+        private readonly IAssetLookupService _lookupService;
 
-        public AssetLookupController(IUnitOfWork uow)
+        public AssetLookupController(IAssetLookupService lookupService)
         {
-            _uow = uow;
+            _lookupService = lookupService;
         }
 
         // ══════════════════════════════════════
@@ -27,60 +27,61 @@ namespace InTagWeb.Controllers
         public async Task<IActionResult> AssetTypes()
         {
             ViewData["Title"] = "Asset Types";
-            ViewData["Module"] = "Asset";
-            var items = await _uow.AssetTypes.Query().OrderBy(t => t.Name).ToListAsync();
-            return View(items);
+            ViewData["Module"] = "Assets";
+            return View(await _lookupService.GetAssetTypesAsync());
         }
 
         public IActionResult CreateAssetType()
         {
             ViewData["Title"] = "New Asset Type";
-            ViewData["Module"] = "Asset";
-            return View(new AssetType());
+            ViewData["Module"] = "Assets";
+            return View(new AssetTypeCreateVm());
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateAssetType(AssetType model)
+        public async Task<IActionResult> CreateAssetType(AssetTypeCreateVm model)
         {
             if (!ModelState.IsValid) return View(model);
-            if (await _uow.AssetTypes.ExistsAsync(t => t.Name == model.Name))
+            try
             {
-                ModelState.AddModelError("Name", "An asset type with this name already exists.");
+                await _lookupService.CreateAssetTypeAsync(model);
+                TempData["Success"] = $"Asset type '{model.Name}' created.";
+                return RedirectToAction(nameof(AssetTypes));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
                 return View(model);
             }
-            await _uow.AssetTypes.AddAsync(model);
-            await _uow.SaveChangesAsync();
-            TempData["Success"] = $"Asset type '{model.Name}' created.";
-            return RedirectToAction(nameof(AssetTypes));
         }
 
         public async Task<IActionResult> EditAssetType(int id)
         {
-            var item = await _uow.AssetTypes.GetByIdAsync(id);
-            if (item == null) return NotFound();
-            ViewData["Title"] = $"Edit — {item.Name}";
-            ViewData["Module"] = "Asset";
-            return View(item);
+            try
+            {
+                var model = await _lookupService.GetAssetTypeByIdAsync(id);
+                ViewData["Title"] = $"Edit — {model.Name}";
+                ViewData["Module"] = "Assets";
+                return View(model);
+            }
+            catch (KeyNotFoundException) { return NotFound(); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditAssetType(int id, AssetType model)
+        public async Task<IActionResult> EditAssetType(AssetTypeUpdateVm model)
         {
             if (!ModelState.IsValid) return View(model);
-            var item = await _uow.AssetTypes.GetByIdAsync(id);
-            if (item == null) return NotFound();
-
-            item.Name = model.Name;
-            item.Description = model.Description;
-            item.DefaultDepreciationMethod = model.DefaultDepreciationMethod;
-            item.UsefulLifeMonths = model.UsefulLifeMonths;
-            item.Category = model.Category;
-            item.DefaultSalvageValuePercent = model.DefaultSalvageValuePercent;
-
-            _uow.AssetTypes.Update(item);
-            await _uow.SaveChangesAsync();
-            TempData["Success"] = $"Asset type '{item.Name}' updated.";
-            return RedirectToAction(nameof(AssetTypes));
+            try
+            {
+                await _lookupService.UpdateAssetTypeAsync(model);
+                TempData["Success"] = $"Asset type '{model.Name}' updated.";
+                return RedirectToAction(nameof(AssetTypes));
+            }
+            catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(model);
+            }
         }
 
         // ══════════════════════════════════════
@@ -90,66 +91,65 @@ namespace InTagWeb.Controllers
         public async Task<IActionResult> Locations()
         {
             ViewData["Title"] = "Locations";
-            ViewData["Module"] = "Asset";
-            var items = await _uow.Locations.Query()
-                .Include(l => l.ParentLocation)
-                .OrderBy(l => l.Name).ToListAsync();
-            return View(items);
+            ViewData["Module"] = "Assets";
+            return View(await _lookupService.GetLocationsAsync());
         }
 
         public async Task<IActionResult> CreateLocation()
         {
             ViewData["Title"] = "New Location";
-            ViewData["Module"] = "Asset";
+            ViewData["Module"] = "Assets";
             await PopulateLocationParents();
-            return View(new Location());
+            return View(new LocationCreateVm());
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateLocation(Location model)
+        public async Task<IActionResult> CreateLocation(LocationCreateVm model)
         {
             if (!ModelState.IsValid) { await PopulateLocationParents(); return View(model); }
-            if (await _uow.Locations.ExistsAsync(l => l.Code == model.Code))
+            try
             {
-                ModelState.AddModelError("Code", "A location with this code already exists.");
+                await _lookupService.CreateLocationAsync(model);
+                TempData["Success"] = $"Location '{model.Name}' created.";
+                return RedirectToAction(nameof(Locations));
+            }
+            catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
+            {
+                ModelState.AddModelError("", ex.Message);
                 await PopulateLocationParents();
                 return View(model);
             }
-            await _uow.Locations.AddAsync(model);
-            await _uow.SaveChangesAsync();
-            TempData["Success"] = $"Location '{model.Name}' created.";
-            return RedirectToAction(nameof(Locations));
         }
 
         public async Task<IActionResult> EditLocation(int id)
         {
-            var item = await _uow.Locations.GetByIdAsync(id);
-            if (item == null) return NotFound();
-            ViewData["Title"] = $"Edit — {item.Name}";
-            ViewData["Module"] = "Asset";
-            await PopulateLocationParents(id);
-            return View(item);
+            try
+            {
+                var model = await _lookupService.GetLocationByIdAsync(id);
+                ViewData["Title"] = $"Edit — {model.Name}";
+                ViewData["Module"] = "Assets";
+                await PopulateLocationParents(id);
+                return View(model);
+            }
+            catch (KeyNotFoundException) { return NotFound(); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditLocation(int id, Location model)
+        public async Task<IActionResult> EditLocation(LocationUpdateVm model)
         {
-            if (!ModelState.IsValid) { await PopulateLocationParents(id); return View(model); }
-            var item = await _uow.Locations.GetByIdAsync(id);
-            if (item == null) return NotFound();
-
-            item.Code = model.Code;
-            item.Name = model.Name;
-            item.Address = model.Address;
-            item.Building = model.Building;
-            item.Floor = model.Floor;
-            item.Room = model.Room;
-            item.ParentLocationId = model.ParentLocationId;
-
-            _uow.Locations.Update(item);
-            await _uow.SaveChangesAsync();
-            TempData["Success"] = $"Location '{item.Name}' updated.";
-            return RedirectToAction(nameof(Locations));
+            if (!ModelState.IsValid) { await PopulateLocationParents(model.Id); return View(model); }
+            try
+            {
+                await _lookupService.UpdateLocationAsync(model);
+                TempData["Success"] = $"Location '{model.Name}' updated.";
+                return RedirectToAction(nameof(Locations));
+            }
+            catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
+            {
+                ModelState.AddModelError("", ex.Message);
+                await PopulateLocationParents(model.Id);
+                return View(model);
+            }
         }
 
         // ══════════════════════════════════════
@@ -159,63 +159,65 @@ namespace InTagWeb.Controllers
         public async Task<IActionResult> Departments()
         {
             ViewData["Title"] = "Departments";
-            ViewData["Module"] = "Asset";
-            var items = await _uow.Departments.Query()
-                .Include(d => d.ParentDepartment)
-                .OrderBy(d => d.Name).ToListAsync();
-            return View(items);
+            ViewData["Module"] = "Assets";
+            return View(await _lookupService.GetDepartmentsAsync());
         }
 
         public async Task<IActionResult> CreateDepartment()
         {
             ViewData["Title"] = "New Department";
-            ViewData["Module"] = "Asset";
+            ViewData["Module"] = "Assets";
             await PopulateDepartmentParents();
-            return View(new Department());
+            return View(new DepartmentCreateVm());
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateDepartment(Department model)
+        public async Task<IActionResult> CreateDepartment(DepartmentCreateVm model)
         {
             if (!ModelState.IsValid) { await PopulateDepartmentParents(); return View(model); }
-            if (await _uow.Departments.ExistsAsync(d => d.Code == model.Code))
+            try
             {
-                ModelState.AddModelError("Code", "A department with this code already exists.");
+                await _lookupService.CreateDepartmentAsync(model);
+                TempData["Success"] = $"Department '{model.Name}' created.";
+                return RedirectToAction(nameof(Departments));
+            }
+            catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
+            {
+                ModelState.AddModelError("", ex.Message);
                 await PopulateDepartmentParents();
                 return View(model);
             }
-            await _uow.Departments.AddAsync(model);
-            await _uow.SaveChangesAsync();
-            TempData["Success"] = $"Department '{model.Name}' created.";
-            return RedirectToAction(nameof(Departments));
         }
 
         public async Task<IActionResult> EditDepartment(int id)
         {
-            var item = await _uow.Departments.GetByIdAsync(id);
-            if (item == null) return NotFound();
-            ViewData["Title"] = $"Edit — {item.Name}";
-            ViewData["Module"] = "Asset";
-            await PopulateDepartmentParents(id);
-            return View(item);
+            try
+            {
+                var model = await _lookupService.GetDepartmentByIdAsync(id);
+                ViewData["Title"] = $"Edit — {model.Name}";
+                ViewData["Module"] = "Assets";
+                await PopulateDepartmentParents(id);
+                return View(model);
+            }
+            catch (KeyNotFoundException) { return NotFound(); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditDepartment(int id, Department model)
+        public async Task<IActionResult> EditDepartment(DepartmentUpdateVm model)
         {
-            if (!ModelState.IsValid) { await PopulateDepartmentParents(id); return View(model); }
-            var item = await _uow.Departments.GetByIdAsync(id);
-            if (item == null) return NotFound();
-
-            item.Code = model.Code;
-            item.Name = model.Name;
-            item.Description = model.Description;
-            item.ParentDepartmentId = model.ParentDepartmentId;
-
-            _uow.Departments.Update(item);
-            await _uow.SaveChangesAsync();
-            TempData["Success"] = $"Department '{item.Name}' updated.";
-            return RedirectToAction(nameof(Departments));
+            if (!ModelState.IsValid) { await PopulateDepartmentParents(model.Id); return View(model); }
+            try
+            {
+                await _lookupService.UpdateDepartmentAsync(model);
+                TempData["Success"] = $"Department '{model.Name}' updated.";
+                return RedirectToAction(nameof(Departments));
+            }
+            catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
+            {
+                ModelState.AddModelError("", ex.Message);
+                await PopulateDepartmentParents(model.Id);
+                return View(model);
+            }
         }
 
         // ══════════════════════════════════════
@@ -225,78 +227,77 @@ namespace InTagWeb.Controllers
         public async Task<IActionResult> Vendors()
         {
             ViewData["Title"] = "Vendors";
-            ViewData["Module"] = "Asset";
-            var items = await _uow.Vendors.Query().OrderBy(v => v.Name).ToListAsync();
-            return View(items);
+            ViewData["Module"] = "Assets";
+            return View(await _lookupService.GetVendorsAsync());
         }
 
         public IActionResult CreateVendor()
         {
             ViewData["Title"] = "New Vendor";
-            ViewData["Module"] = "Asset";
-            return View(new Vendor());
+            ViewData["Module"] = "Assets";
+            return View(new VendorCreateVm());
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateVendor(Vendor model)
+        public async Task<IActionResult> CreateVendor(VendorCreateVm model)
         {
             if (!ModelState.IsValid) return View(model);
-            if (await _uow.Vendors.ExistsAsync(v => v.Code == model.Code))
+            try
             {
-                ModelState.AddModelError("Code", "A vendor with this code already exists.");
+                await _lookupService.CreateVendorAsync(model);
+                TempData["Success"] = $"Vendor '{model.Name}' created.";
+                return RedirectToAction(nameof(Vendors));
+            }
+            catch (InvalidOperationException ex)
+            {
+                ModelState.AddModelError("", ex.Message);
                 return View(model);
             }
-            await _uow.Vendors.AddAsync(model);
-            await _uow.SaveChangesAsync();
-            TempData["Success"] = $"Vendor '{model.Name}' created.";
-            return RedirectToAction(nameof(Vendors));
         }
 
         public async Task<IActionResult> EditVendor(int id)
         {
-            var item = await _uow.Vendors.GetByIdAsync(id);
-            if (item == null) return NotFound();
-            ViewData["Title"] = $"Edit — {item.Name}";
-            ViewData["Module"] = "Asset";
-            return View(item);
+            try
+            {
+                var model = await _lookupService.GetVendorByIdAsync(id);
+                ViewData["Title"] = $"Edit — {model.Name}";
+                ViewData["Module"] = "Assets";
+                return View(model);
+            }
+            catch (KeyNotFoundException) { return NotFound(); }
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditVendor(int id, Vendor model)
+        public async Task<IActionResult> EditVendor(VendorUpdateVm model)
         {
             if (!ModelState.IsValid) return View(model);
-            var item = await _uow.Vendors.GetByIdAsync(id);
-            if (item == null) return NotFound();
-
-            item.Code = model.Code;
-            item.Name = model.Name;
-            item.ContactPerson = model.ContactPerson;
-            item.Email = model.Email;
-            item.Phone = model.Phone;
-            item.Address = model.Address;
-            item.Website = model.Website;
-            item.Notes = model.Notes;
-
-            _uow.Vendors.Update(item);
-            await _uow.SaveChangesAsync();
-            TempData["Success"] = $"Vendor '{item.Name}' updated.";
-            return RedirectToAction(nameof(Vendors));
+            try
+            {
+                await _lookupService.UpdateVendorAsync(model);
+                TempData["Success"] = $"Vendor '{model.Name}' updated.";
+                return RedirectToAction(nameof(Vendors));
+            }
+            catch (Exception ex) when (ex is KeyNotFoundException or InvalidOperationException)
+            {
+                ModelState.AddModelError("", ex.Message);
+                return View(model);
+            }
         }
 
-        // ── Helpers ──────────────────────────
+        // ── Dropdown Helpers ─────────────────
 
         private async Task PopulateLocationParents(int? excludeId = null)
         {
-            var locs = await _uow.Locations.Query().OrderBy(l => l.Name).ToListAsync();
-            if (excludeId.HasValue) locs = locs.Where(l => l.Id != excludeId.Value).ToList();
-            ViewBag.ParentLocations = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(locs, "Id", "Name");
+            var locations = await _lookupService.GetLocationsAsync();
+            var filtered = excludeId.HasValue ? locations.Where(l => l.Id != excludeId.Value) : locations;
+            ViewBag.ParentLocations = new SelectList(filtered, "Id", "Name");
         }
 
         private async Task PopulateDepartmentParents(int? excludeId = null)
         {
-            var depts = await _uow.Departments.Query().OrderBy(d => d.Name).ToListAsync();
-            if (excludeId.HasValue) depts = depts.Where(d => d.Id != excludeId.Value).ToList();
-            ViewBag.ParentDepartments = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(depts, "Id", "Name");
+            var departments = await _lookupService.GetDepartmentsAsync();
+            var filtered = excludeId.HasValue ? departments.Where(d => d.Id != excludeId.Value) : departments;
+            ViewBag.ParentDepartments = new SelectList(filtered, "Id", "Name");
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using InTagDataLayer.Context;
+using InTagDataLayer.Context;
 using InTagEntitiesLayer.Common;
 using InTagEntitiesLayer.Interfaces;
 using InTagLogicLayer.Interfaces;
@@ -13,10 +13,9 @@ namespace InTagWeb.Configuration
     public static class AuthServiceRegistration
     {
         public static IServiceCollection AddInTagAuthentication(
-            this IServiceCollection services,
-            IConfiguration configuration)
+      this IServiceCollection services,
+      IConfiguration configuration)
         {
-            // Bind JWT settings
             var jwtSettings = configuration.GetSection("JwtSettings");
             services.Configure<JwtSettings>(jwtSettings);
 
@@ -35,30 +34,36 @@ namespace InTagWeb.Configuration
             .AddEntityFrameworkStores<InTagDbContext>()
             .AddDefaultTokenProviders();
 
-            // JWT Authentication
-            var secretKey = jwtSettings["SecretKey"]!;
-            services.AddAuthentication(options =>
+            // Cookie auth for MVC (this is the DEFAULT scheme from AddIdentity)
+            services.ConfigureApplicationCookie(options =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(secretKey)),
-                    ClockSkew = TimeSpan.Zero // No tolerance for expiration
-                };
+                options.LoginPath = "/Account/Login";
+                options.AccessDeniedPath = "/Account/AccessDenied";
+                options.ExpireTimeSpan = TimeSpan.FromHours(8);
+                options.SlidingExpiration = true;
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
             });
 
-            // Register auth service
+            // JWT Authentication — as a NAMED scheme for API only
+            var secretKey = jwtSettings["SecretKey"]!;
+            services.AddAuthentication()
+                .AddJwtBearer("Bearer", options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = jwtSettings["Issuer"],
+                        ValidAudience = jwtSettings["Audience"],
+                        IssuerSigningKey = new SymmetricSecurityKey(
+                            Encoding.UTF8.GetBytes(secretKey)),
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
+
             services.AddScoped<IAuthService, AuthService>();
 
             return services;
@@ -81,5 +86,36 @@ namespace InTagWeb.Configuration
                 }
             }
         }
+
+        public static async Task SeedAdminUserAsync(IServiceProvider serviceProvider)
+        {
+            var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+            var adminEmail = "admin@intag.local";
+            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+            if (adminUser == null)
+            {
+                adminUser = new ApplicationUser
+                {
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    FirstName = "System",
+                    LastName = "Admin",
+                    TenantId = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                    EmailConfirmed = true,
+                    IsActive = true,
+                    CreatedDate = DateTimeOffset.UtcNow
+                };
+
+                var result = await userManager.CreateAsync(adminUser, "Admin@123456");
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(adminUser, "Admin");
+                    await userManager.AddClaimAsync(adminUser,
+                        new System.Security.Claims.Claim("TenantId", adminUser.TenantId.ToString()));
+                }
+            }
+        }
+
     }
 }

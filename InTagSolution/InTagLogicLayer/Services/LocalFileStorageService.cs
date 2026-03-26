@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using InTagEntitiesLayer.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace InTagLogicLayer.Services
 {
@@ -13,8 +14,19 @@ namespace InTagLogicLayer.Services
         public LocalFileStorageService(string basePath)
         {
             _basePath = basePath;
-            Directory.CreateDirectory(_basePath);
         }
+
+        //public LocalFileStorageService(string basePath)
+        //{
+        //    if (!Path.IsPathRooted(basePath))
+        //        _basePath = Path.Combine(Directory.GetCurrentDirectory(), basePath);
+        //    else
+        //        _basePath = basePath;
+
+        //    if (!Directory.Exists(_basePath))
+        //        Directory.CreateDirectory(_basePath);
+        //}
+
 
         public async Task<StoredFileResult> UploadAsync(Stream stream, string fileName, string folder)
         {

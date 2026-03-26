@@ -8,8 +8,8 @@ using InTagWeb.Filters;
 
 namespace InTagWeb.Controllers
 {
-    //[Authorize]
-    [AllowAnonymous]
+    [Authorize]
+    //[AllowAnonymous]
     [RequireModule(PlatformModule.Workflow)]
     public class WorkflowController : Controller
     {

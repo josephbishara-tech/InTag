@@ -21,6 +21,8 @@ namespace InTagRepositoryLayer.Manufacturing
                 .Include(o => o.QualityChecks.OrderByDescending(q => q.CheckDate))
                 .FirstOrDefaultAsync(o => o.Id == id);
 
+
+
         public async Task<IReadOnlyList<ProductionOrder>> GetByStatusAsync(ProductionOrderStatus status)
             => await _dbSet.Where(o => o.Status == status)
                 .Include(o => o.Product)

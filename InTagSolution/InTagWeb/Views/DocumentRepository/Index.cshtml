@@ -1,0 +1,193 @@
+@model InTagViewModelLayer.Document.RepositoryBrowseVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-folder2-open me-2"></i>@(Model.CurrentFolderName ?? "Documents")</h1>
+        @if (Model.Breadcrumbs.Any())
+        {
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0 small">
+                    @foreach (var crumb in Model.Breadcrumbs)
+                    {
+                        if (crumb.FolderId.HasValue)
+                        {
+                            <li class="breadcrumb-item"><a asp-action="Index" asp-route-folderId="@crumb.FolderId">@crumb.Name</a></li>
+                        }
+                        else
+                        {
+                            <li class="breadcrumb-item"><a asp-action="Index">@crumb.Name</a></li>
+                        }
+                    }
+                </ol>
+            </nav>
+        }
+    </div>
+    <div class="d-flex gap-2">
+        @if (Model.ViewMode == "my")
+        {
+            <a asp-action="SharedWithMe" class="btn btn-outline-info btn-sm"><i class="bi bi-people me-1"></i>Shared With Me</a>
+        }
+        else
+        {
+            <a asp-action="Index" class="btn btn-outline-primary btn-sm"><i class="bi bi-folder me-1"></i>My Documents</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- ═══ Left: Folders & Files ═══ -->
+    <div class="col-lg-9">
+
+        <!-- Folders -->
+        @if (Model.Folders.Any())
+        {
+            <div class="row g-2 mb-3">
+                @foreach (var folder in Model.Folders)
+                {
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body d-flex align-items-center p-3">
+                                <i class="bi bi-folder-fill text-warning fs-3 me-3"></i>
+                                <div class="flex-grow-1">
+                                    <a asp-action="Index" asp-route-folderId="@folder.Id"
+                                       class="fw-bold text-decoration-none d-block">@folder.Name</a>
+                                    <small class="text-muted">@folder.FileCount files, @folder.SubFolderCount folders</small>
+                                </div>
+                                @if (Model.ViewMode == "my")
+                                {
+                                    <form asp-action="DeleteFolder" method="post" class="ms-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="folderId" value="@folder.Id" />
+                                        <input type="hidden" name="parentFolderId" value="@Model.CurrentFolderId" />
+                                        <button type="submit" class="btn btn-sm btn-link text-danger p-0"
+                                                onclick="return confirm('Delete folder?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Files -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">Files (@Model.Files.Count)</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light"><tr><th>Name</th><th>Size</th><th>Uploaded</th><th>Shared</th><th></th></tr></thead>
+                    <tbody>
+                        @if (!Model.Files.Any())
+                        {
+                            <tr><td colspan="5" class="text-center text-muted py-4"><i class="bi bi-cloud-upload fs-3 d-block mb-2"></i>No files. Upload one below.</td></tr>
+                        }
+                        @foreach (var file in Model.Files)
+                        {
+                            <tr>
+                                <td>
+                                    <i class="bi @file.FileIcon text-primary me-1"></i>
+                                    <a asp-action="Download" asp-route-fileId="@file.Id" class="fw-bold text-decoration-none">@file.FileName</a>
+                                    @if (!string.IsNullOrEmpty(file.Description))
+                                    {
+                                        <br />
+                                        <small class="text-muted">@file.Description</small>
+                                    }
+                                </td>
+                                <td><small>@file.FileSizeDisplay</small></td>
+                                <td><small>@file.UploadedDate.ToString("d")</small></td>
+                                <td>
+                                    @if (file.ShareCount > 0)
+                                    {
+                                        <span class="badge bg-info">@file.ShareCount share(s)</span>
+                                    }
+                                    else
+                                    {
+
+                                        <small class="text-muted">—</small>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        <a asp-action="Download" asp-route-fileId="@file.Id" class="btn btn-sm btn-outline-primary" title="Download"><i class="bi bi-download"></i></a>
+                                        @if (Model.ViewMode == "my")
+                                        {
+                                            <a asp-action="Share" asp-route-fileId="@file.Id" class="btn btn-sm btn-outline-info" title="Share"><i class="bi bi-share"></i></a>
+                                            <form asp-action="DeleteFile" method="post" class="d-inline">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="fileId" value="@file.Id" />
+                                                <input type="hidden" name="folderId" value="@Model.CurrentFolderId" />
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"
+                                                        onclick="return confirm('Delete this file?')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Right: Actions ═══ -->
+    <div class="col-lg-3">
+        @if (Model.ViewMode == "my")
+        {
+            <!-- New Folder -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">New Folder</h6></div>
+                <div class="card-body">
+                    <form asp-action="CreateFolder" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="ParentFolderId" value="@Model.CurrentFolderId" />
+                        <div class="mb-2">
+                            <input name="Name" class="form-control form-control-sm" placeholder="Folder name" required />
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-folder-plus me-1"></i>Create Folder
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Upload File -->
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Upload File</h6></div>
+                <div class="card-body">
+                    <form asp-action="Upload" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="folderId" value="@Model.CurrentFolderId" />
+                        <div class="mb-2">
+                            <input type="file" name="file" class="form-control form-control-sm" required />
+                        </div>
+                        <div class="mb-2">
+                            <input name="description" class="form-control form-control-sm" placeholder="Description (optional)" />
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary w-100">
+                            <i class="bi bi-cloud-upload me-1"></i>Upload
+                        </button>
+                    </form>
+                    <small class="text-muted mt-1 d-block">Max 50MB</small>
+                </div>
+            </div>
+        }
+
+        <!-- Folder Info -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Info</h6></div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-1"><small class="text-muted">Folders</small><strong>@Model.Folders.Count</strong></div>
+                <div class="d-flex justify-content-between mb-1"><small class="text-muted">Files</small><strong>@Model.Files.Count</strong></div>
+                <div class="d-flex justify-content-between"><small class="text-muted">View</small><span class="badge bg-light text-dark">@Model.ViewMode</span></div>
+            </div>
+        </div>
+    </div>
+</div>

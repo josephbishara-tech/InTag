@@ -674,6 +674,198 @@ namespace InTagDataLayer.Migrations
                     b.ToTable("Location", (string)null);
                 });
 
+            modelBuilder.Entity("InTagEntitiesLayer.Asset.TrackingLine", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AssetId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ConditionAtScan")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("FoundAtLocationId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModifiedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid?>("ScannedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ScannedCode")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTimeOffset?>("ScannedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("TrackingRequestId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssetId");
+
+                    b.HasIndex("FoundAtLocationId");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_TrackingLine_IsActive")
+                        .HasFilter("[IsActive] = 1");
+
+                    b.HasIndex("TenantId", "IsActive")
+                        .HasDatabaseName("IX_TrackingLine_TenantId_IsActive");
+
+                    b.HasIndex("TrackingRequestId", "AssetId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_TrackLine_ReqId_AssetId");
+
+                    b.ToTable("TrackingLine", (string)null);
+                });
+
+            modelBuilder.Entity("InTagEntitiesLayer.Asset.TrackingRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid?>("AssignedToUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CompletedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("DamagedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("FoundCount")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MissingCount")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModifiedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("RelocatedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RequestNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTimeOffset?>("StartedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("TotalAssets")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_TrackingRequest_IsActive")
+                        .HasFilter("[IsActive] = 1");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_TrackReq_Status");
+
+                    b.HasIndex("TenantId", "IsActive")
+                        .HasDatabaseName("IX_TrackingRequest_TenantId_IsActive");
+
+                    b.HasIndex("TenantId", "RequestNumber")
+                        .IsUnique()
+                        .HasDatabaseName("IX_TrackReq_TenantId_Number");
+
+                    b.ToTable("TrackingRequest", (string)null);
+                });
+
             modelBuilder.Entity("InTagEntitiesLayer.Asset.Vendor", b =>
                 {
                     b.Property<int>("Id")
@@ -788,6 +980,9 @@ namespace InTagDataLayer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
+
+                    b.Property<string>("JobTitle")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
                         .HasMaxLength(100)
@@ -1345,6 +1540,251 @@ namespace InTagDataLayer.Migrations
                         .HasDatabaseName("IX_DocumentRevision_TenantId_IsActive");
 
                     b.ToTable("DocumentRevision", (string)null);
+                });
+
+            modelBuilder.Entity("InTagEntitiesLayer.Document.FileShare", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Message")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModifiedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("Permission")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<Guid>("SharedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("SharedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("TargetDepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TargetType")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("TargetUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("UserFileId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_FileShare_IsActive")
+                        .HasFilter("[IsActive] = 1");
+
+                    b.HasIndex("TargetDepartmentId");
+
+                    b.HasIndex("TargetUserId")
+                        .HasDatabaseName("IX_FileShare_TargetUser");
+
+                    b.HasIndex("TenantId", "IsActive")
+                        .HasDatabaseName("IX_FileShare_TenantId_IsActive");
+
+                    b.HasIndex("UserFileId", "TargetUserId")
+                        .HasDatabaseName("IX_FileShare_File_User");
+
+                    b.ToTable("FileShare", (string)null);
+                });
+
+            modelBuilder.Entity("InTagEntitiesLayer.Document.UserFile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FileType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("FolderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Hash")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModifiedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UploadedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("UploadedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_UserFile_IsActive")
+                        .HasFilter("[IsActive] = 1");
+
+                    b.HasIndex("FolderId", "FileName")
+                        .HasDatabaseName("IX_UserFile_Folder_Name");
+
+                    b.HasIndex("TenantId", "IsActive")
+                        .HasDatabaseName("IX_UserFile_TenantId_IsActive");
+
+                    b.ToTable("UserFile", (string)null);
+                });
+
+            modelBuilder.Entity("InTagEntitiesLayer.Document.UserFolder", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<Guid?>("ModifiedByUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("ModifiedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("OwnerType")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("OwnerUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("ParentFolderId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<string>("StoragePath")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("IsActive")
+                        .HasDatabaseName("IX_UserFolder_IsActive")
+                        .HasFilter("[IsActive] = 1");
+
+                    b.HasIndex("ParentFolderId");
+
+                    b.HasIndex("TenantId", "IsActive")
+                        .HasDatabaseName("IX_UserFolder_TenantId_IsActive");
+
+                    b.HasIndex("TenantId", "OwnerUserId", "Name", "ParentFolderId")
+                        .HasDatabaseName("IX_UserFolder_Owner_Name");
+
+                    b.ToTable("UserFolder", (string)null);
                 });
 
             modelBuilder.Entity("InTagEntitiesLayer.Inventory.CycleCount", b =>
@@ -3163,6 +3603,9 @@ namespace InTagDataLayer.Migrations
                         .HasPrecision(8, 2)
                         .HasColumnType("decimal(8,2)");
 
+                    b.Property<decimal>("CapacityPerHour")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -3185,10 +3628,16 @@ namespace InTagDataLayer.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<decimal>("EfficiencyPercent")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(true);
+
+                    b.Property<decimal>("LaborRatePerHour")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("LocationId")
                         .HasColumnType("int");
@@ -3206,6 +3655,9 @@ namespace InTagDataLayer.Migrations
 
                     b.Property<int>("NumberOfStations")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("OverheadRatePerHour")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -3930,6 +4382,43 @@ namespace InTagDataLayer.Migrations
                     b.Navigation("ParentLocation");
                 });
 
+            modelBuilder.Entity("InTagEntitiesLayer.Asset.TrackingLine", b =>
+                {
+                    b.HasOne("InTagEntitiesLayer.Asset.AssetItem", "Asset")
+                        .WithMany()
+                        .HasForeignKey("AssetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InTagEntitiesLayer.Asset.Location", "FoundAtLocation")
+                        .WithMany()
+                        .HasForeignKey("FoundAtLocationId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("InTagEntitiesLayer.Asset.TrackingRequest", "TrackingRequest")
+                        .WithMany("Lines")
+                        .HasForeignKey("TrackingRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Asset");
+
+                    b.Navigation("FoundAtLocation");
+
+                    b.Navigation("TrackingRequest");
+                });
+
+            modelBuilder.Entity("InTagEntitiesLayer.Asset.TrackingRequest", b =>
+                {
+                    b.HasOne("InTagEntitiesLayer.Asset.Location", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Location");
+                });
+
             modelBuilder.Entity("InTagEntitiesLayer.Common.RefreshToken", b =>
                 {
                     b.HasOne("InTagEntitiesLayer.Common.ApplicationUser", "User")
@@ -3992,6 +4481,52 @@ namespace InTagDataLayer.Migrations
                         .IsRequired();
 
                     b.Navigation("Document");
+                });
+
+            modelBuilder.Entity("InTagEntitiesLayer.Document.FileShare", b =>
+                {
+                    b.HasOne("InTagEntitiesLayer.Asset.Department", "TargetDepartment")
+                        .WithMany()
+                        .HasForeignKey("TargetDepartmentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("InTagEntitiesLayer.Document.UserFile", "UserFile")
+                        .WithMany("Shares")
+                        .HasForeignKey("UserFileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TargetDepartment");
+
+                    b.Navigation("UserFile");
+                });
+
+            modelBuilder.Entity("InTagEntitiesLayer.Document.UserFile", b =>
+                {
+                    b.HasOne("InTagEntitiesLayer.Document.UserFolder", "Folder")
+                        .WithMany("Files")
+                        .HasForeignKey("FolderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Folder");
+                });
+
+            modelBuilder.Entity("InTagEntitiesLayer.Document.UserFolder", b =>
+                {
+                    b.HasOne("InTagEntitiesLayer.Asset.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("InTagEntitiesLayer.Document.UserFolder", "ParentFolder")
+                        .WithMany("SubFolders")
+                        .HasForeignKey("ParentFolderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Department");
+
+                    b.Navigation("ParentFolder");
                 });
 
             modelBuilder.Entity("InTagEntitiesLayer.Inventory.CycleCount", b =>
@@ -4483,6 +5018,11 @@ namespace InTagDataLayer.Migrations
                     b.Navigation("ChildLocations");
                 });
 
+            modelBuilder.Entity("InTagEntitiesLayer.Asset.TrackingRequest", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
             modelBuilder.Entity("InTagEntitiesLayer.Asset.Vendor", b =>
                 {
                     b.Navigation("Assets");
@@ -4498,6 +5038,18 @@ namespace InTagDataLayer.Migrations
             modelBuilder.Entity("InTagEntitiesLayer.Document.DocumentRevision", b =>
                 {
                     b.Navigation("Files");
+                });
+
+            modelBuilder.Entity("InTagEntitiesLayer.Document.UserFile", b =>
+                {
+                    b.Navigation("Shares");
+                });
+
+            modelBuilder.Entity("InTagEntitiesLayer.Document.UserFolder", b =>
+                {
+                    b.Navigation("Files");
+
+                    b.Navigation("SubFolders");
                 });
 
             modelBuilder.Entity("InTagEntitiesLayer.Inventory.CycleCount", b =>

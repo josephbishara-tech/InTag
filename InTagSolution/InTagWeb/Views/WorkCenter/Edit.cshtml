@@ -1,0 +1,39 @@
+@model InTagViewModelLayer.Manufacturing.WorkCenterUpdateVm
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-pencil me-2"></i>Edit — @Model.Code</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <h6 class="fw-bold mb-3 text-primary">General</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" /></div>
+                <div class="col-md-5"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /></div>
+                <div class="col-md-4"><label asp-for="Status" class="form-label"></label><select asp-for="Status" asp-items="ViewBag.Statuses" class="form-select"></select></div>
+                <div class="col-md-6"><label asp-for="LocationId" class="form-label">Location</label><select asp-for="LocationId" asp-items="ViewBag.Locations" class="form-select"><option value="">— None —</option></select></div>
+                <div class="col-md-6"><label asp-for="DepartmentId" class="form-label">Department</label><select asp-for="DepartmentId" asp-items="ViewBag.Departments" class="form-select"><option value="">— None —</option></select></div>
+                <div class="col-12"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" class="form-control" rows="2"></textarea></div>
+            </div>
+
+            <h6 class="fw-bold mb-3 text-primary">Capacity & Rates</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4"><label asp-for="CapacityPerHour" class="form-label"></label><div class="input-group"><input asp-for="CapacityPerHour" class="form-control" type="number" step="0.1" /><span class="input-group-text">units/hr</span></div></div>
+                <div class="col-md-4"><label asp-for="AvailableHoursPerDay" class="form-label"></label><div class="input-group"><input asp-for="AvailableHoursPerDay" class="form-control" type="number" step="0.5" /><span class="input-group-text">hrs/day</span></div></div>
+                <div class="col-md-4"><label asp-for="EfficiencyPercent" class="form-label"></label><div class="input-group"><input asp-for="EfficiencyPercent" class="form-control" type="number" step="1" /><span class="input-group-text">%</span></div></div>
+                <div class="col-md-6"><label asp-for="LaborRatePerHour" class="form-label"></label><div class="input-group"><span class="input-group-text">$</span><input asp-for="LaborRatePerHour" class="form-control" type="number" step="0.01" /><span class="input-group-text">/hr</span></div></div>
+                <div class="col-md-6"><label asp-for="OverheadRatePerHour" class="form-label"></label><div class="input-group"><span class="input-group-text">$</span><input asp-for="OverheadRatePerHour" class="form-control" type="number" step="0.01" /><span class="input-group-text">/hr</span></div></div>
+            </div>
+
+            <div class="d-flex gap-2"><button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Save</button><a asp-action="Index" class="btn btn-outline-secondary">Cancel</a></div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

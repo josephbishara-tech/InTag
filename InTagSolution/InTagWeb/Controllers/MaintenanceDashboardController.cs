@@ -6,8 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace InTagWeb.Controllers
 {
-    //[Authorize]
-    [AllowAnonymous]
+    [Authorize]
+    //[AllowAnonymous]
     [RequireModule(PlatformModule.Maintenance)]
     public class MaintenanceDashboardController : Controller
     {
@@ -20,7 +20,7 @@ namespace InTagWeb.Controllers
 
         public async Task<IActionResult> Index()
         {
-            ViewData["Title"] = "Maintenance Dashboard";
+            ViewData["Title"] = "Dashboard";
             ViewData["Module"] = "Maintenance";
             var dashboard = await _mntService.GetDashboardAsync();
             return View(dashboard);

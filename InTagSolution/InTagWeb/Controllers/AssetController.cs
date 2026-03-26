@@ -8,8 +8,8 @@ using InTagWeb.Filters;
 
 namespace InTagWeb.Controllers
 {
-    [AllowAnonymous]
-    //[Authorize]
+    //[AllowAnonymous]
+    [Authorize]
     [RequireModule(PlatformModule.Asset)]
     public class AssetController : Controller
     {

@@ -16,7 +16,6 @@ namespace InTagLogicLayer.Document
         private readonly DocumentExportService _exportService;
         private readonly IWorkflowHook _workflowHook;
 
-
         public DocumentService(
             IUnitOfWork uow,
             ITenantService tenantService,
@@ -26,7 +25,7 @@ namespace InTagLogicLayer.Document
             _uow = uow;
             _tenantService = tenantService;
             _logger = logger;
-            _exportService  = new DocumentExportService(uow); 
+            _exportService = new DocumentExportService(uow);
             _workflowHook = workflowHook;
         }
 
@@ -36,9 +35,16 @@ namespace InTagLogicLayer.Document
 
         public async Task<DocumentDetailVm> GetByIdAsync(int id)
         {
-            var doc = await _uow.Documents.GetWithRevisionsAsync(id);
+            var doc = await _uow.Documents.Query()
+                .Include(d => d.Department)
+                .Include(d => d.Revisions.Where(r => r.IsActive))
+                    .ThenInclude(r => r.Files.Where(f => f.IsActive))
+                .Include(d => d.DistributionRecords)
+                .FirstOrDefaultAsync(d => d.Id == id);
+
             if (doc == null)
                 throw new KeyNotFoundException($"Document with ID {id} not found.");
+
             return MapToDetailVm(doc);
         }
 
@@ -95,7 +101,6 @@ namespace InTagLogicLayer.Document
 
         public async Task<DocumentDetailVm> CreateAsync(DocumentCreateVm model)
         {
-            // Generate or validate doc number
             string docNumber;
             if (!string.IsNullOrWhiteSpace(model.DocNumberOverride))
             {
@@ -130,7 +135,6 @@ namespace InTagLogicLayer.Document
             await _uow.Documents.AddAsync(doc);
             await _uow.SaveChangesAsync();
 
-            // Create initial revision
             var revision = new DocumentRevision
             {
                 DocumentId = doc.Id,
@@ -178,16 +182,12 @@ namespace InTagLogicLayer.Document
         {
             var doc = await _uow.Documents.GetByIdAsync(id);
             if (doc == null) throw new KeyNotFoundException("Document not found.");
-
-            if (doc.IsCheckedOut)
-                throw new InvalidOperationException("Cannot delete a checked-out document.");
-
+            if (doc.IsCheckedOut) throw new InvalidOperationException("Cannot delete a checked-out document.");
             if (doc.Status == DocumentStatus.Published)
                 throw new InvalidOperationException("Cannot delete a published document. Obsolete it first.");
 
             _uow.Documents.SoftDelete(doc);
             await _uow.SaveChangesAsync();
-
             _logger.LogInformation("Document soft-deleted: {DocNumber}", doc.DocNumber);
         }
 
@@ -199,11 +199,8 @@ namespace InTagLogicLayer.Document
         {
             var doc = await _uow.Documents.GetByIdAsync(id);
             if (doc == null) throw new KeyNotFoundException("Document not found.");
-
             if (doc.IsCheckedOut)
-                throw new InvalidOperationException(
-                    $"Document is already checked out since {doc.CheckedOutDate:g}.");
-
+                throw new InvalidOperationException($"Document is already checked out since {doc.CheckedOutDate:g}.");
             if (doc.Status == DocumentStatus.Obsolete || doc.Status == DocumentStatus.Archived)
                 throw new InvalidOperationException("Cannot check out an obsolete or archived document.");
 
@@ -216,7 +213,6 @@ namespace InTagLogicLayer.Document
 
             _logger.LogInformation("Document {DocNumber} checked out by user {UserId}",
                 doc.DocNumber, doc.CheckedOutByUserId);
-
             return await GetByIdAsync(id);
         }
 
@@ -224,14 +220,10 @@ namespace InTagLogicLayer.Document
         {
             var doc = await _uow.Documents.GetByIdAsync(id);
             if (doc == null) throw new KeyNotFoundException("Document not found.");
-
-            if (!doc.IsCheckedOut)
-                throw new InvalidOperationException("Document is not checked out.");
-
+            if (!doc.IsCheckedOut) throw new InvalidOperationException("Document is not checked out.");
             if (doc.CheckedOutByUserId != _tenantService.GetCurrentUserId())
                 throw new InvalidOperationException("Only the user who checked out the document can check it in.");
 
-            // Create new revision
             var newVersion = DocumentNumberGenerator.IncrementVersion(doc.CurrentVersion);
 
             var rev = new DocumentRevision
@@ -245,13 +237,11 @@ namespace InTagLogicLayer.Document
 
             await _uow.DocumentRevisions.AddAsync(rev);
 
-            // Update document
             doc.CurrentVersion = newVersion;
             doc.IsCheckedOut = false;
             doc.CheckedOutByUserId = null;
             doc.CheckedOutDate = null;
 
-            // If it was published, move back to InReview
             if (doc.Status == DocumentStatus.Published)
                 doc.Status = DocumentStatus.InReview;
 
@@ -260,7 +250,6 @@ namespace InTagLogicLayer.Document
 
             _logger.LogInformation("Document {DocNumber} checked in — new revision {Version}",
                 doc.DocNumber, newVersion);
-
             return await GetByIdAsync(id);
         }
 
@@ -268,11 +257,8 @@ namespace InTagLogicLayer.Document
         {
             var doc = await _uow.Documents.GetByIdAsync(id);
             if (doc == null) throw new KeyNotFoundException("Document not found.");
+            if (!doc.IsCheckedOut) throw new InvalidOperationException("Document is not checked out.");
 
-            if (!doc.IsCheckedOut)
-                throw new InvalidOperationException("Document is not checked out.");
-
-            // Allow the checkout user or an admin to cancel
             doc.IsCheckedOut = false;
             doc.CheckedOutByUserId = null;
             doc.CheckedOutDate = null;
@@ -292,12 +278,10 @@ namespace InTagLogicLayer.Document
         {
             var doc = await _uow.Documents.GetByIdAsync(model.DocumentId);
             if (doc == null) throw new KeyNotFoundException("Document not found.");
-
             if (doc.IsCheckedOut)
                 throw new InvalidOperationException("Document is checked out. Use check-in to create a revision.");
 
             var newVersion = DocumentNumberGenerator.IncrementVersion(doc.CurrentVersion);
-
             var rev = new DocumentRevision
             {
                 DocumentId = model.DocumentId,
@@ -324,44 +308,36 @@ namespace InTagLogicLayer.Document
         {
             var revision = await _uow.DocumentRevisions.GetByIdAsync(model.RevisionId);
             if (revision == null) throw new KeyNotFoundException("Revision not found.");
-
             if (revision.ApprovalStatus != ApprovalAction.Pending)
                 throw new InvalidOperationException("Revision has already been actioned.");
 
             revision.ApproverUserId = _tenantService.GetCurrentUserId();
             revision.ApprovalDate = DateTimeOffset.UtcNow;
             revision.ApprovalComments = model.Comments;
-            revision.ApprovalStatus = model.IsApproved
-                ? ApprovalAction.Approved
-                : ApprovalAction.Rejected;
+            revision.ApprovalStatus = model.IsApproved ? ApprovalAction.Approved : ApprovalAction.Rejected;
 
             _uow.DocumentRevisions.Update(revision);
 
-            // If approved, move document to Approved status
+            var doc = await _uow.Documents.GetByIdAsync(revision.DocumentId);
             if (model.IsApproved)
             {
-                var doc = await _uow.Documents.GetByIdAsync(revision.DocumentId);
                 if (doc != null && doc.Status == DocumentStatus.InReview)
                 {
                     doc.Status = DocumentStatus.Approved;
                     _uow.Documents.Update(doc);
                 }
-                await _workflowHook.OnRevisionApprovedAsync(revision.DocumentId, doc.DocNumber, revision.RevisionNumber);
+                await _workflowHook.OnRevisionApprovedAsync(revision.DocumentId, doc?.DocNumber ?? "", revision.RevisionNumber);
             }
             else
             {
-                var rejDoc = await _uow.Documents.GetByIdAsync(revision.DocumentId);
-                if (rejDoc != null)
-                    await _workflowHook.OnRevisionRejectedAsync(revision.DocumentId, rejDoc.DocNumber, revision.RevisionNumber);
+                if (doc != null)
+                    await _workflowHook.OnRevisionRejectedAsync(revision.DocumentId, doc.DocNumber, revision.RevisionNumber);
             }
 
             await _uow.SaveChangesAsync();
 
             _logger.LogInformation("Revision {RevId} {Action} for document {DocId}",
-                model.RevisionId,
-                model.IsApproved ? "approved" : "rejected",
-                revision.DocumentId);
-
+                model.RevisionId, model.IsApproved ? "approved" : "rejected", revision.DocumentId);
             return await GetByIdAsync(revision.DocumentId);
         }
 
@@ -373,19 +349,14 @@ namespace InTagLogicLayer.Document
         {
             var doc = await _uow.Documents.GetByIdAsync(id);
             if (doc == null) throw new KeyNotFoundException("Document not found.");
-
             if (doc.Status != DocumentStatus.Approved && doc.Status != DocumentStatus.Draft)
-                throw new InvalidOperationException(
-                    $"Only approved or draft documents can be published. Current status: {doc.Status}.");
+                throw new InvalidOperationException($"Only approved or draft documents can be published. Current: {doc.Status}.");
 
             doc.Status = DocumentStatus.Published;
             doc.EffectiveDate = DateTimeOffset.UtcNow;
 
-            // Set next review date based on cycle
             if (doc.ReviewCycle != ReviewCycle.None)
-            {
                 doc.NextReviewDate = DateTimeOffset.UtcNow.AddMonths((int)doc.ReviewCycle);
-            }
 
             _uow.Documents.Update(doc);
             await _uow.SaveChangesAsync();
@@ -400,9 +371,7 @@ namespace InTagLogicLayer.Document
         {
             var doc = await _uow.Documents.GetByIdAsync(id);
             if (doc == null) throw new KeyNotFoundException("Document not found.");
-
-            if (doc.IsCheckedOut)
-                throw new InvalidOperationException("Cannot obsolete a checked-out document.");
+            if (doc.IsCheckedOut) throw new InvalidOperationException("Cannot obsolete a checked-out document.");
 
             doc.Status = DocumentStatus.Obsolete;
             doc.ExpiryDate = DateTimeOffset.UtcNow;
@@ -410,7 +379,6 @@ namespace InTagLogicLayer.Document
 
             _uow.Documents.Update(doc);
             await _uow.SaveChangesAsync();
-
             _logger.LogInformation("Document {DocNumber} marked obsolete", doc.DocNumber);
             return await GetByIdAsync(id);
         }
@@ -425,7 +393,6 @@ namespace InTagLogicLayer.Document
 
             _uow.Documents.Update(doc);
             await _uow.SaveChangesAsync();
-
             _logger.LogInformation("Document {DocNumber} archived", doc.DocNumber);
             return await GetByIdAsync(id);
         }
@@ -438,7 +405,6 @@ namespace InTagLogicLayer.Document
         {
             var doc = await _uow.Documents.GetByIdAsync(model.DocumentId);
             if (doc == null) throw new KeyNotFoundException("Document not found.");
-
             if (doc.Status != DocumentStatus.Published)
                 throw new InvalidOperationException("Only published documents can be distributed.");
 
@@ -457,21 +423,19 @@ namespace InTagLogicLayer.Document
 
             _logger.LogInformation("Document {DocNumber} distributed to {Recipient} via {Method}",
                 doc.DocNumber, model.RecipientName ?? model.RecipientIdentifier, model.Method);
-            await _workflowHook.OnDocumentDistributedAsync(model.DocumentId, doc.DocNumber, model.RecipientName ?? model.RecipientIdentifier);
+            await _workflowHook.OnDocumentDistributedAsync(model.DocumentId, doc.DocNumber,
+                model.RecipientName ?? model.RecipientIdentifier);
         }
 
         public async Task AcknowledgeDistributionAsync(int distributionId)
         {
             var record = await _uow.DistributionRecordsRepo.GetByIdAsync(distributionId);
             if (record == null) throw new KeyNotFoundException("Distribution record not found.");
-
-            if (record.AcknowledgedDate.HasValue)
-                throw new InvalidOperationException("Already acknowledged.");
+            if (record.AcknowledgedDate.HasValue) throw new InvalidOperationException("Already acknowledged.");
 
             record.AcknowledgedDate = DateTimeOffset.UtcNow;
             _uow.DistributionRecordsRepo.Update(record);
             await _uow.SaveChangesAsync();
-
             _logger.LogInformation("Distribution {Id} acknowledged", distributionId);
         }
 
@@ -507,6 +471,9 @@ namespace InTagLogicLayer.Document
                 NextReviewDate = doc.NextReviewDate,
                 IsCheckedOut = doc.IsCheckedOut,
                 CheckedOutByUserId = doc.CheckedOutByUserId,
+                CheckedOutByName = doc.CheckedOutByUserId.HasValue
+                    ? doc.CheckedOutByUserId.Value.ToString()[..8] + "..."
+                    : null,
                 CheckedOutDate = doc.CheckedOutDate,
                 IsoReference = doc.IsoReference,
                 ConfidentialityLevel = doc.ConfidentialityLevel,
@@ -514,25 +481,38 @@ namespace InTagLogicLayer.Document
                 DepartmentName = doc.Department?.Name,
                 Notes = doc.Notes,
                 RevisionCount = doc.Revisions?.Count ?? 0,
-                Revisions = doc.Revisions?.Select(r => new RevisionListItemVm
-                {
-                    Id = r.Id,
-                    RevisionNumber = r.RevisionNumber,
-                    ChangeDescription = r.ChangeDescription,
-                    ApprovalStatus = r.ApprovalStatus,
-                    ApprovalDate = r.ApprovalDate,
-                    CreatedDate = r.CreatedDate,
-                    FileCount = r.Files?.Count ?? 0
-                }).ToList() ?? new List<RevisionListItemVm>(),
-                Distributions = doc.DistributionRecords?.Select(d => new DistributionListItemVm
-                {
-                    Id = d.Id,
-                    RecipientName = d.RecipientName ?? d.RecipientIdentifier,
-                    Method = d.Method.ToString(),
-                    SentDate = d.SentDate,
-                    IsAcknowledged = d.IsAcknowledged,
-                    AcknowledgedDate = d.AcknowledgedDate
-                }).ToList() ?? new List<DistributionListItemVm>(),
+                Revisions = doc.Revisions?
+                    .OrderByDescending(r => r.CreatedDate)
+                    .Select(r => new RevisionDetailVm
+                    {
+                        Id = r.Id,
+                        RevisionNumber = r.RevisionNumber,
+                        ChangeDescription = r.ChangeDescription,
+                        ApprovalStatus = r.ApprovalStatus,
+                        ApprovalDate = r.ApprovalDate,
+                        ApprovalComments = r.ApprovalComments,
+                        CreatedDate = r.CreatedDate,
+                        Files = r.Files?
+                            .Where(f => f.IsActive)
+                            .Select(f => new RevisionFileVm
+                            {
+                                Id = f.Id,
+                                FileName = f.FileName,
+                                FileType = f.FileType,
+                                FileSize = f.FileSize
+                            }).ToList() ?? new List<RevisionFileVm>()
+                    }).ToList() ?? new List<RevisionDetailVm>(),
+                Distributions = doc.DistributionRecords?
+                    .OrderByDescending(d => d.SentDate)
+                    .Select(d => new DistributionListItemVm
+                    {
+                        Id = d.Id,
+                        RecipientName = d.RecipientName ?? d.RecipientIdentifier,
+                        Method = d.Method.ToString(),
+                        SentDate = d.SentDate,
+                        IsAcknowledged = d.IsAcknowledged,
+                        AcknowledgedDate = d.AcknowledgedDate
+                    }).ToList() ?? new List<DistributionListItemVm>(),
                 CreatedDate = doc.CreatedDate,
                 ModifiedDate = doc.ModifiedDate
             };
@@ -554,9 +534,10 @@ namespace InTagLogicLayer.Document
             };
         }
 
-        // =══════════════════════════════════════
-        // Dashboard & Reports (not implemented in this snippet)
-        // =══════════════════════════════════════
+        // ══════════════════════════════════════
+        //  DASHBOARD & REPORTS
+        // ══════════════════════════════════════
+
         public async Task<DocumentDashboardVm> GetDashboardAsync()
         {
             var now = DateTimeOffset.UtcNow;
@@ -571,7 +552,6 @@ namespace InTagLogicLayer.Document
 
             var allDistributions = await _uow.DistributionRecordsRepo.GetAllAsync();
 
-            // Overdue reviews
             var overdueReviews = allDocs
                 .Where(d => d.NextReviewDate.HasValue && d.NextReviewDate < now && d.Status == DocumentStatus.Published)
                 .Select(d => new ReviewAlertVm
@@ -582,15 +562,11 @@ namespace InTagLogicLayer.Document
                     ReviewDate = d.NextReviewDate!.Value,
                     DaysOverdueOrRemaining = (int)(now - d.NextReviewDate!.Value).TotalDays
                 })
-                .OrderByDescending(r => r.DaysOverdueOrRemaining)
-                .ToList();
+                .OrderByDescending(r => r.DaysOverdueOrRemaining).ToList();
 
-            // Upcoming reviews (next 30 days)
             var upcomingReviews = allDocs
-                .Where(d => d.NextReviewDate.HasValue
-                            && d.NextReviewDate >= now
-                            && d.NextReviewDate <= now.AddDays(30)
-                            && d.Status == DocumentStatus.Published)
+                .Where(d => d.NextReviewDate.HasValue && d.NextReviewDate >= now
+                            && d.NextReviewDate <= now.AddDays(30) && d.Status == DocumentStatus.Published)
                 .Select(d => new ReviewAlertVm
                 {
                     DocumentId = d.Id,
@@ -599,10 +575,8 @@ namespace InTagLogicLayer.Document
                     ReviewDate = d.NextReviewDate!.Value,
                     DaysOverdueOrRemaining = (int)(d.NextReviewDate!.Value - now).TotalDays
                 })
-                .OrderBy(r => r.DaysOverdueOrRemaining)
-                .ToList();
+                .OrderBy(r => r.DaysOverdueOrRemaining).ToList();
 
-            // Pending approvals
             var pendingApprovals = allRevisions
                 .Where(r => r.ApprovalStatus == ApprovalAction.Pending)
                 .Select(r => new PendingApprovalVm
@@ -615,10 +589,8 @@ namespace InTagLogicLayer.Document
                     SubmittedDate = r.CreatedDate,
                     DaysPending = (int)(now - r.CreatedDate).TotalDays
                 })
-                .OrderByDescending(p => p.DaysPending)
-                .ToList();
+                .OrderByDescending(p => p.DaysPending).ToList();
 
-            // Checked out
             var checkedOut = allDocs
                 .Where(d => d.IsCheckedOut && d.CheckedOutDate.HasValue)
                 .Select(d => new CheckedOutDocVm
@@ -629,55 +601,39 @@ namespace InTagLogicLayer.Document
                     CheckedOutDate = d.CheckedOutDate!.Value,
                     DaysCheckedOut = (int)(now - d.CheckedOutDate!.Value).TotalDays
                 })
-                .OrderByDescending(c => c.DaysCheckedOut)
-                .ToList();
+                .OrderByDescending(c => c.DaysCheckedOut).ToList();
 
-            // Review compliance: published docs with review date set and not overdue
             var publishedWithReview = allDocs.Count(d => d.Status == DocumentStatus.Published && d.NextReviewDate.HasValue);
             var compliantDocs = allDocs.Count(d => d.Status == DocumentStatus.Published
                                                   && d.NextReviewDate.HasValue && d.NextReviewDate >= now);
             var reviewCompliance = publishedWithReview > 0
                 ? Math.Round(compliantDocs * 100m / publishedWithReview, 1) : 100;
 
-            // By status
-            var byStatus = allDocs
-                .GroupBy(d => d.Status)
+            var byStatus = allDocs.GroupBy(d => d.Status)
                 .Select(g => new DocStatusBreakdownVm
                 {
                     Status = g.Key.ToString(),
                     Count = g.Count(),
                     Percentage = allDocs.Count > 0 ? Math.Round(g.Count() * 100m / allDocs.Count, 1) : 0
-                })
-                .OrderByDescending(s => s.Count)
-                .ToList();
+                }).OrderByDescending(s => s.Count).ToList();
 
-            // By type
-            var byType = allDocs
-                .GroupBy(d => d.Type)
+            var byType = allDocs.GroupBy(d => d.Type)
                 .Select(g => new DocTypeBreakdownVm
                 {
                     Type = g.Key.ToString(),
                     Count = g.Count(),
                     PublishedCount = g.Count(d => d.Status == DocumentStatus.Published)
-                })
-                .OrderByDescending(t => t.Count)
-                .ToList();
+                }).OrderByDescending(t => t.Count).ToList();
 
-            // By category
-            var byCategory = allDocs
-                .GroupBy(d => d.Category)
+            var byCategory = allDocs.GroupBy(d => d.Category)
                 .Select(g => new DocCategoryBreakdownVm
                 {
                     Category = g.Key.ToString(),
                     Count = g.Count()
-                })
-                .OrderByDescending(c => c.Count)
-                .ToList();
+                }).OrderByDescending(c => c.Count).ToList();
 
-            // Recent activity
             var recentRevisions = allRevisions
-                .OrderByDescending(r => r.CreatedDate)
-                .Take(5)
+                .OrderByDescending(r => r.CreatedDate).Take(5)
                 .Select(r => new RecentDocActivityVm
                 {
                     Icon = r.ApprovalStatus == ApprovalAction.Approved ? "bi-check-circle-fill" : "bi-file-earmark-plus",
@@ -687,24 +643,18 @@ namespace InTagLogicLayer.Document
                 });
 
             var recentDistributions = allDistributions
-                .OrderByDescending(d => d.SentDate)
-                .Take(5)
+                .OrderByDescending(d => d.SentDate).Take(5)
                 .Select(d =>
                 {
-                    var doc = allDocs.FirstOrDefault(doc => doc.Id == d.DocumentId);
+                    var docRef = allDocs.FirstOrDefault(x => x.Id == d.DocumentId);
                     return new RecentDocActivityVm
                     {
                         Icon = "bi-send",
-                        Description = $"{doc?.DocNumber ?? "?"} distributed to {d.RecipientName ?? d.RecipientIdentifier}",
+                        Description = $"{docRef?.DocNumber ?? "?"} distributed to {d.RecipientName ?? d.RecipientIdentifier}",
                         Date = d.SentDate,
                         DocumentId = d.DocumentId
                     };
                 });
-
-            var recentActivity = recentRevisions.Concat(recentDistributions)
-                .OrderByDescending(a => a.Date)
-                .Take(10)
-                .ToList();
 
             return new DocumentDashboardVm
             {
@@ -726,10 +676,10 @@ namespace InTagLogicLayer.Document
                 ByStatus = byStatus,
                 ByType = byType,
                 ByCategory = byCategory,
-                RecentActivity = recentActivity
+                RecentActivity = recentRevisions.Concat(recentDistributions)
+                    .OrderByDescending(a => a.Date).Take(10).ToList()
             };
         }
-
 
         public Task<byte[]> ExportDocumentRegisterAsync(DocumentFilterVm filter)
             => _exportService.ExportDocumentRegisterAsync(filter);

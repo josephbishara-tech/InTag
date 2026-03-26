@@ -12,11 +12,19 @@ namespace InTagWeb.Configuration
             services.AddScoped<IDocumentService, DocumentService>();
             services.AddScoped<IDocumentFileService, DocumentFileService>();
             services.AddScoped<IApprovalMatrixService, ApprovalMatrixService>();
+            services.AddScoped<IUserRepositoryService, UserRepositoryService>();
 
-            // File storage — local disk for VPS/IIS deployment
-            var basePath = configuration.GetValue<string>("FileStorage:LocalPath")
-                           ?? Path.Combine(Directory.GetCurrentDirectory(), "App_Data", "files");
-            services.AddSingleton<IFileStorageService>(new LocalFileStorageService(basePath));
+            // File storage — register as pre-built singleton
+            var basePath = configuration.GetValue<string>("FileStorage:LocalPath") ?? "wwwroot/InTagFiles";
+            var fullPath = Path.IsPathRooted(basePath)
+                ? basePath
+                : Path.Combine(Directory.GetCurrentDirectory(), basePath);
+
+            if (!Directory.Exists(fullPath))
+                Directory.CreateDirectory(fullPath);
+
+            services.AddSingleton<IFileStorageService>(
+                _ => new LocalFileStorageService(fullPath));
 
             return services;
         }

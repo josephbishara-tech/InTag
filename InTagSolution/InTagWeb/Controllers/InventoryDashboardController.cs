@@ -7,8 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace InTagWeb.Controllers
 {
-    //[Authorize]
-    [AllowAnonymous]
+    [Authorize]
+    //[AllowAnonymous]
     [RequireModule(PlatformModule.Inventory)]
     public class InventoryDashboardController : Controller
     {
@@ -21,7 +21,7 @@ namespace InTagWeb.Controllers
 
         public async Task<IActionResult> Index()
         {
-            ViewData["Title"] = "Inventory Dashboard";
+            ViewData["Title"] = "Dashboard";
             ViewData["Module"] = "Inventory";
             return View(await _invService.GetDashboardAsync());
         }

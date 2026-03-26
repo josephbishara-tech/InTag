@@ -33,6 +33,26 @@ namespace InTagEntitiesLayer.Manufacturing
         /// </summary>
         public decimal CostPerHour { get; set; }
 
+        /// <summary>
+        /// Units this work center can produce per hour
+        /// </summary>
+        public decimal CapacityPerHour { get; set; }
+
+        /// <summary>
+        /// Labor cost rate per hour
+        /// </summary>
+        public decimal LaborRatePerHour { get; set; }
+
+        /// <summary>
+        /// Overhead cost rate per hour
+        /// </summary>
+        public decimal OverheadRatePerHour { get; set; }
+
+        /// <summary>
+        /// Operating efficiency percentage (0-100)
+        /// </summary>
+        public decimal EfficiencyPercent { get; set; } = 100;
+
         public int? LocationId { get; set; }
 
         public int? DepartmentId { get; set; }

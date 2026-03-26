@@ -28,4 +28,9 @@
     <ProjectReference Include="..\InTagViewModelLayer\InTagViewModelLayer.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Logs\" />
+    <Folder Include="wwwroot\InTagFiles\" />
+  </ItemGroup>
+
 </Project>

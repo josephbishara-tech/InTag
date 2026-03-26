@@ -1,6 +1,7 @@
 using InTagEntitiesLayer.Asset;
 using InTagEntitiesLayer.Common;
 using InTagEntitiesLayer.Document;
+using InTagEntitiesLayer.Identity;
 using InTagEntitiesLayer.Interfaces;
 using InTagEntitiesLayer.Inventory;
 using InTagEntitiesLayer.Maintenance;
@@ -35,6 +36,8 @@ namespace InTagDataLayer.Context
         public DbSet<Location> Locations => Set<Location>();
         public DbSet<Department> Departments => Set<Department>();
         public DbSet<Vendor> Vendors => Set<Vendor>();
+        public DbSet<TrackingRequest> TrackingRequests => Set<TrackingRequest>();
+        public DbSet<TrackingLine> TrackingLines => Set<TrackingLine>();
 
         // Document Module
         public DbSet<InTagEntitiesLayer.Document.Document> Documents => Set<InTagEntitiesLayer.Document.Document>();
@@ -42,6 +45,10 @@ namespace InTagDataLayer.Context
         public DbSet<DocumentFile> DocumentFiles => Set<DocumentFile>();
         public DbSet<ApprovalMatrix> ApprovalMatrices => Set<ApprovalMatrix>();
         public DbSet<DistributionRecord> DistributionRecords => Set<DistributionRecord>();
+
+        public DbSet<UserFolder> UserFolders => Set<UserFolder>();
+        public DbSet<UserFile> UserFiles => Set<UserFile>();
+        public DbSet<InTagEntitiesLayer.Document.FileShare> FileShares => Set<InTagEntitiesLayer.Document.FileShare>();
 
         // Manufacturing Module
         public DbSet<Product> Products => Set<Product>();
@@ -97,18 +104,18 @@ namespace InTagDataLayer.Context
                     method.Invoke(null, new object[] { modelBuilder, _tenantService });
                 }
             }
+         
         }
+        
 
-        private static void ApplyGlobalFilters<TEntity>(
-     ModelBuilder modelBuilder,
-     ITenantService tenantService)
-     where TEntity : BaseEntity
-        {
-            modelBuilder.Entity<TEntity>().HasQueryFilter(
-                e => e.IsActive
-                     && (tenantService.GetCurrentTenantId() == Guid.Empty
-                         || e.TenantId == tenantService.GetCurrentTenantId()));
-        }
+        private static void ApplyGlobalFilters<TEntity>(ModelBuilder modelBuilder,ITenantService tenantService)
+            where TEntity : BaseEntity
+            {
+                modelBuilder.Entity<TEntity>().HasQueryFilter(
+                    e => e.IsActive
+                         && (tenantService.GetCurrentTenantId() == Guid.Empty
+                             || e.TenantId == tenantService.GetCurrentTenantId()));
+            }
 
         public override int SaveChanges()
         {

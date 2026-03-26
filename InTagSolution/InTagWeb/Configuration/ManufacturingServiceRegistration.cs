@@ -8,6 +8,7 @@ namespace InTagWeb.Configuration
             this IServiceCollection services)
         {
             services.AddScoped<IManufacturingService, ManufacturingService>();
+           
             return services;
         }
     }

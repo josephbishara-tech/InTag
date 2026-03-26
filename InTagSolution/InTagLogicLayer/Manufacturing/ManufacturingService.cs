@@ -312,13 +312,133 @@ namespace InTagLogicLayer.Manufacturing
         //  WORK CENTERS
         // ═══════════════════════════════════════
 
-        public async Task<IReadOnlyList<WorkCenterListVm>> GetWorkCentersAsync()
+        //public async Task<IReadOnlyList<WorkCenterListVm>> GetWorkCentersAsync()
+        //{
+        //    var wcs = await _uow.WorkCenters.Query()
+        //        .Where(w => w.Status == WorkCenterStatus.Active)
+        //        .OrderBy(w => w.Code).ToListAsync();
+        //    return wcs.Select(w => new WorkCenterListVm
+        //    { Id = w.Id, Code = w.Code, Name = w.Name }).ToList();
+        //}
+        // ═══════════════════════════════════════
+        //  WORK CENTERS
+        // ═══════════════════════════════════════
+
+        public async Task<IReadOnlyList<WorkCenterListItemVm>> GetWorkCentersAsync()
         {
-            var wcs = await _uow.WorkCenters.Query()
-                .Where(w => w.Status == WorkCenterStatus.Active)
+            var items = await _uow.WorkCenters.Query()
                 .OrderBy(w => w.Code).ToListAsync();
-            return wcs.Select(w => new WorkCenterListVm
-            { Id = w.Id, Code = w.Code, Name = w.Name }).ToList();
+
+            return items.Select(w => new WorkCenterListItemVm
+            {
+                Id = w.Id,
+                Code = w.Code,
+                Name = w.Name,
+                Status = w.Status,
+                CapacityPerHour = w.CapacityPerHour,
+                LaborRatePerHour = w.LaborRatePerHour,
+                OverheadRatePerHour = w.OverheadRatePerHour,
+                AvailableHoursPerDay = w.CapacityHoursPerDay,
+                EfficiencyPercent = w.EfficiencyPercent
+            }).ToList();
+        }
+
+        public async Task<WorkCenterDetailVm> GetWorkCenterByIdAsync(int id)
+        {
+            var wc = await _uow.WorkCenters.GetWithDetailsAsync(id);
+            if (wc == null) throw new KeyNotFoundException("Work center not found.");
+
+            return new WorkCenterDetailVm
+            {
+                Id = wc.Id,
+                Code = wc.Code,
+                Name = wc.Name,
+                Description = wc.Description,
+                Status = wc.Status,
+                CapacityPerHour = wc.CapacityPerHour,
+                LaborRatePerHour = wc.LaborRatePerHour,
+                OverheadRatePerHour = wc.OverheadRatePerHour,
+                AvailableHoursPerDay = wc.CapacityHoursPerDay,
+                EfficiencyPercent = wc.EfficiencyPercent,
+                LocationName = wc.Location?.Name,
+                DepartmentName = wc.Department?.Name,
+                RoutingOperationCount = wc.Operations?.Count ?? 0
+            };
+        }
+
+        public async Task<WorkCenterUpdateVm> GetWorkCenterForEditAsync(int id)
+        {
+            var wc = await _uow.WorkCenters.GetByIdAsync(id);
+            if (wc == null) throw new KeyNotFoundException("Work center not found.");
+
+            return new WorkCenterUpdateVm
+            {
+                Id = wc.Id,
+                Code = wc.Code,
+                Name = wc.Name,
+                Description = wc.Description,
+                Status = wc.Status,
+                CapacityPerHour = wc.CapacityPerHour,
+                LaborRatePerHour = wc.LaborRatePerHour,
+                OverheadRatePerHour = wc.OverheadRatePerHour,
+                AvailableHoursPerDay = wc.CapacityHoursPerDay,
+                EfficiencyPercent = wc.EfficiencyPercent,
+                LocationId = wc.LocationId,
+                DepartmentId = wc.DepartmentId
+            };
+        }
+
+        public async Task<WorkCenterDetailVm> CreateWorkCenterAsync(WorkCenterCreateVm model)
+        {
+            if (await _uow.WorkCenters.ExistsAsync(w => w.Code == model.Code))
+                throw new InvalidOperationException($"Work center code '{model.Code}' already exists.");
+
+            var entity = new WorkCenter
+            {
+                Code = model.Code,
+                Name = model.Name,
+                Description = model.Description,
+                Status = model.Status,
+                CapacityPerHour = model.CapacityPerHour,
+                LaborRatePerHour = model.LaborRatePerHour,
+                OverheadRatePerHour = model.OverheadRatePerHour,
+                CapacityHoursPerDay = model.AvailableHoursPerDay,
+                EfficiencyPercent = model.EfficiencyPercent,
+                LocationId = model.LocationId,
+                DepartmentId = model.DepartmentId
+            };
+
+            await _uow.WorkCenters.AddAsync(entity);
+            await _uow.SaveChangesAsync();
+
+            _logger.LogInformation("Work center created: {Code} — {Name}", entity.Code, entity.Name);
+            return await GetWorkCenterByIdAsync(entity.Id);
+        }
+
+        public async Task UpdateWorkCenterAsync(WorkCenterUpdateVm model)
+        {
+            var item = await _uow.WorkCenters.GetByIdAsync(model.Id);
+            if (item == null) throw new KeyNotFoundException("Work center not found.");
+
+            if (await _uow.WorkCenters.ExistsAsync(w => w.Code == model.Code && w.Id != model.Id))
+                throw new InvalidOperationException($"Work center code '{model.Code}' already exists.");
+
+            item.Code = model.Code;
+            item.Name = model.Name;
+            item.Description = model.Description;
+            item.Status = model.Status;
+            item.CapacityPerHour = model.CapacityPerHour;
+            item.LaborRatePerHour = model.LaborRatePerHour;
+            item.OverheadRatePerHour = model.OverheadRatePerHour;
+            item.CapacityHoursPerDay = model.AvailableHoursPerDay;
+            item.EfficiencyPercent = model.EfficiencyPercent;
+            item.LocationId = model.LocationId;
+            item.DepartmentId = model.DepartmentId;
+
+            _uow.WorkCenters.Update(item);
+            await _uow.SaveChangesAsync();
+
+            _logger.LogInformation("Work center updated: {Code} — {Name}", item.Code, item.Name);
         }
 
         // ═══════════════════════════════════════

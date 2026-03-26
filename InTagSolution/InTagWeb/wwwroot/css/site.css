@@ -166,3 +166,20 @@ main {
         font-size: 1.5rem;
         font-weight: 600;
     }
+
+.acls {
+    font-size: 0.85rem;
+    padding-left: 15px !important;
+    text-decoration: none !important;
+    
+}
+
+.divcls {
+    padding: 2PX 0PX 0PX 30PX !important;
+}
+.mnspan {
+    color: #11386a;
+}
+.mnicn {
+    color: rgba(var(--bs-warning-rgb), var(--bs-text-opacity)) !important;
+}

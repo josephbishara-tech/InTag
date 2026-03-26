@@ -8,8 +8,8 @@ using InTagWeb.Filters;
 
 namespace InTagWeb.Controllers
 {
-    //[Authorize]
-    [AllowAnonymous]
+    [Authorize]
+    //[AllowAnonymous]
     [RequireModule(PlatformModule.Manufacturing)]
     public class ProductionController : Controller
     {
@@ -217,7 +217,7 @@ namespace InTagWeb.Controllers
         // GET: /Production/Capacity
         public async Task<IActionResult> Capacity(int? days)
         {
-            ViewData["Title"] = "Work Center Capacity";
+            ViewData["Title"] = "Capacity";
             ViewData["Module"] = "Manufacturing";
             var range = days ?? 14;
             var from = DateTimeOffset.UtcNow;

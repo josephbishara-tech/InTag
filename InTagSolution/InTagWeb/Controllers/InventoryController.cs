@@ -9,8 +9,8 @@ using InTagWeb.Filters;
 
 namespace InTagWeb.Controllers
 {
-    //[Authorize]
-    [AllowAnonymous]
+    [Authorize]
+    //[AllowAnonymous]
     [RequireModule(PlatformModule.Inventory)]
     public class InventoryController : Controller
     {

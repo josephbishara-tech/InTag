@@ -1,4 +1,4 @@
-@model InTagEntitiesLayer.Asset.AssetType
+@model InTagViewModelLayer.Asset.AssetTypeUpdateVm
 @using InTagEntitiesLayer.Enums
 
 <div class="content-header d-flex justify-content-between align-items-center">
@@ -15,7 +15,7 @@
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
                     <div class="row g-3 mb-4">
                         <div class="col-md-6"><label asp-for="Name" class="form-label"></label><input asp-for="Name" class="form-control" /></div>
-                        <div class="col-md-6"><label asp-for="Category" class="form-label"></label><select asp-for="Category" asp-items="@(new Microsoft.AspNetCore.Mvc.Rendering.SelectList(Enum.GetValues<AssetCategory>()))" class="form-select"></select></div>
+                        <div class="col-md-6"><label asp-for="Category" class="form-label"></label><select asp-for="Category" asp-items="@(new SelectList(Enum.GetValues<AssetCategory>()))" class="form-select"></select></div>
                         <div class="col-md-4"><label asp-for="DefaultDepreciationMethod" class="form-label">Depreciation Method</label><select asp-for="DefaultDepreciationMethod" asp-items="@(new Microsoft.AspNetCore.Mvc.Rendering.SelectList(Enum.GetValues<DepreciationMethod>()))" class="form-select"></select></div>
                         <div class="col-md-4"><label asp-for="UsefulLifeMonths" class="form-label">Useful Life (months)</label><input asp-for="UsefulLifeMonths" class="form-control" type="number" /></div>
                         <div class="col-md-4"><label asp-for="DefaultSalvageValuePercent" class="form-label">Salvage Value %</label><div class="input-group"><input asp-for="DefaultSalvageValuePercent" class="form-control" type="number" step="0.01" /><span class="input-group-text">%</span></div></div>

@@ -192,7 +192,7 @@
                                 <a asp-controller="Document" asp-action="Details" asp-route-id="@p.DocumentId"
                                    class="text-decoration-none fw-bold">@p.DocNumber</a>
                                 <span class="text-muted ms-1">@p.Title</span>
-                                <span class="badge bg-light text-dark ms-1">v@p.RevisionNumber</span>
+                                <span class="badge bg-light text-dark ms-1">v @p.RevisionNumber</span>
                             </div>
                             <span class="badge @(p.DaysPending > 3 ? "bg-danger" : "bg-secondary")">
                                 @p.DaysPending day(s)

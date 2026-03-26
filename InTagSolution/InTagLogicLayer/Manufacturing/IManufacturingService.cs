@@ -27,7 +27,12 @@ namespace InTagLogicLayer.Manufacturing
         Task RemoveOperationAsync(int operationId);
 
         // Work Centers
-        Task<IReadOnlyList<WorkCenterListVm>> GetWorkCentersAsync();
+        // Task<IReadOnlyList<WorkCenterListVm>> GetWorkCentersAsync();
+        Task<IReadOnlyList<WorkCenterListItemVm>> GetWorkCentersAsync();
+        Task<WorkCenterDetailVm> GetWorkCenterByIdAsync(int id);
+        Task<WorkCenterUpdateVm> GetWorkCenterForEditAsync(int id);
+        Task<WorkCenterDetailVm> CreateWorkCenterAsync(WorkCenterCreateVm model);
+        Task UpdateWorkCenterAsync(WorkCenterUpdateVm model);
 
         // Production Orders
         Task<ProductionOrderDetailVm> GetOrderByIdAsync(int id);

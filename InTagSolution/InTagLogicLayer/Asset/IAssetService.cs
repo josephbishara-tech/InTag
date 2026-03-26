@@ -42,5 +42,7 @@ namespace InTagLogicLayer.Asset
         Task<byte[]> ExportDepreciationScheduleAsync(int fiscalYear);
         Task<byte[]> ExportTCOReportAsync();
 
+    
+
     }
 }

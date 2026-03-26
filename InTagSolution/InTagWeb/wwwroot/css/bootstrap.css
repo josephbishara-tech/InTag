@@ -12142,7 +12142,8 @@ textarea.form-control-lg {
 }
 
 .breadcrumb {
-  border: 1px solid #dfd7ca;
+/*  border: 1px solid #dfd7ca;*/
+  width:300px;
 }
 
 .pagination a:hover {

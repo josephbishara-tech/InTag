@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
 namespace InTagEntitiesLayer.Common
@@ -11,9 +11,12 @@ namespace InTagEntitiesLayer.Common
         public string? FirstName { get; set; }
 
         public string? LastName { get; set; }
+        public string? JobTitle { get; set; }
+
 
         public bool IsActive { get; set; } = true;
 
         public DateTimeOffset CreatedDate { get; set; }
+
     }
 }

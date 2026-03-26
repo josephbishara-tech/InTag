@@ -28,7 +28,7 @@
                     <tr>
                         <td><a asp-action="DefinitionDetail" asp-route-id="@d.Id" class="fw-bold text-decoration-none">@d.Name</a></td>
                         <td><span class="badge bg-info">@d.CategoryDisplay</span></td>
-                        <td><span class="badge bg-light text-dark">v@d.Version</span></td>
+                        <td><span class="badge bg-light text-dark">v @d.Version</span></td>
                         <td class="text-end">@d.StepCount</td>
                         <td class="text-end">@d.InstanceCount</td>
                         <td><span class="badge @sBadge">@d.StatusDisplay</span></td>

@@ -1,8 +1,13 @@
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using InTagDataLayer.Context;
+using InTagEntitiesLayer.Common;
+using InTagEntitiesLayer.Identity;
 using InTagEntitiesLayer.Interfaces;
+using InTagLogicLayer.Asset;
 using InTagLogicLayer.Services;
 using InTagWeb.Configuration;
 using InTagWeb.Middleware;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -17,6 +22,7 @@ builder.Services.AddInTagAuthentication(builder.Configuration);
 builder.Services.AddInTagHealthChecks(builder.Configuration);
 builder.Services.AddInTagRepositories();
 builder.Services.AddInTagAssetServices();
+builder.Services.AddInTagAssetLookupServices();
 builder.Services.AddScoped<IWorkflowHook, WorkflowHookService>();
 builder.Services.AddInTagDocumentServices(builder.Configuration);
 builder.Services.AddInTagManufacturingServices();
@@ -24,11 +30,15 @@ builder.Services.AddInTagMaintenanceServices();
 builder.Services.AddInTagInventoryServices();
 builder.Services.AddInTagWorkflowServices();
 builder.Services.AddInTagIntegrationServices();
+builder.Services.AddScoped<IAssetTrackingService, AssetTrackingService>();
+ 
 
 
 // ── DbContext (main tenant DB) ───────────
 builder.Services.AddDbContext<InTagDataLayer.Context.InTagDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+ 
+ 
 
 var app = builder.Build();
 
@@ -36,9 +46,10 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     await AuthServiceRegistration.SeedRolesAsync(scope.ServiceProvider);
+    await AuthServiceRegistration.SeedAdminUserAsync(scope.ServiceProvider);
     await TenantServiceRegistration.SeedDefaultTenantAsync(scope.ServiceProvider);
 }
-
+ 
 // ═══ MIDDLEWARE PIPELINE (ORDER MATTERS!) ═══
 
 // 1. Global exception handler — catches everything below

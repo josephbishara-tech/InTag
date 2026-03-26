@@ -62,4 +62,26 @@ namespace InTagEntitiesLayer.Enums
         Print = 2,
         ExternalLink = 3
     }
+
+    public enum FolderOwnerType
+    {
+        User = 0,
+        Product = 1,
+        Department = 2
+    }
+
+    public enum ShareTargetType
+    {
+        User = 0,
+        Department = 1,
+        Everyone = 2
+    }
+
+    public enum SharePermission
+    {
+        View = 0,
+        Download = 1,
+        Edit = 2
+    }
+
 }

@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using InTagEntitiesLayer.Common;
+using InTagEntitiesLayer.Manufacturing;
 
 namespace InTagRepositoryLayer.Common
 {
@@ -16,5 +17,6 @@ namespace InTagRepositoryLayer.Common
         void SoftDelete(T entity);
         Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null);
         Task<bool> ExistsAsync(Expression<Func<T, bool>> predicate);
+       
     }
 }

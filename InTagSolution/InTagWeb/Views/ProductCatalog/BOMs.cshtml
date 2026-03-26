@@ -21,7 +21,7 @@
                     <tr>
                         <td><a asp-action="BOMDetail" asp-route-id="@b.Id" class="fw-bold text-decoration-none">@b.BOMCode</a></td>
                         <td>@b.ProductName</td>
-                        <td><span class="badge bg-light text-dark">v@b.Version</span></td>
+                        <td><span class="badge bg-light text-dark">v @b.Version</span></td>
                         <td><span class="badge @badge">@b.StatusDisplay</span></td>
                         <td class="text-end">@b.LineCount</td>
                         <td><a asp-action="BOMDetail" asp-route-id="@b.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a></td>

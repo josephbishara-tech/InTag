@@ -1,4 +1,4 @@
-﻿using InTagLogicLayer.Asset;
+using InTagLogicLayer.Asset;
 
 namespace InTagWeb.Configuration
 {
@@ -8,6 +8,15 @@ namespace InTagWeb.Configuration
             this IServiceCollection services)
         {
             services.AddScoped<IAssetService, AssetService>();
+            return services;
+        }
+    }
+    public static class AssetLookupServiceRegistration
+    {
+        public static IServiceCollection AddInTagAssetLookupServices(
+            this IServiceCollection services)
+        {
+            services.AddScoped<IAssetLookupService, AssetLookupService>();
             return services;
         }
     }

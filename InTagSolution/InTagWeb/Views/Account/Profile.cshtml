@@ -1,0 +1,27 @@
+@model InTagViewModelLayer.Identity.UserProfileVm
+
+<div class="content-header"><h1><i class="bi bi-person-circle me-2"></i>My Profile</h1></div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6"><small class="text-muted d-block">Name</small><strong>@Model.FullName</strong></div>
+                    <div class="col-sm-6"><small class="text-muted d-block">Email</small>@Model.Email</div>
+                   
+                    <div class="col-sm-6"><small class="text-muted d-block">Role(s)</small>@string.Join(", ", Model.Roles)</div>
+                    <div class="col-sm-6"><small class="text-muted d-block">Member Since</small>@Model.CreatedDate.ToString("d")</div>
+                  
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body d-grid gap-2">
+                <a asp-action="ChangePassword" class="btn btn-outline-primary"><i class="bi bi-key me-1"></i>Change Password</a>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,113 @@
+@model InTagViewModelLayer.Identity.LoginVm
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>InTag — Login</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="~/css/login.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Login Page -->
+        <div class="auth-card" id="loginPage">
+            <div class="auth-header">
+                <img src="~/img/MPR-Master.png" width="200" alt="IdenTech MPR" />
+            </div>
+            <div class="auth-body">
+           
+                <form asp-action="Login" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="ReturnUrl" />
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" type="email" class="form-control" name="email" id="loginEmail" placeholder="Enter your email" required />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3 password-input">
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <input asp-for="Password" type="password" class="form-control" id="loginPassword" name="password" placeholder="Enter your password" required />
+                        <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input asp-for="RememberMe" type="checkbox" class="form-check-input" id="rememberMe" />
+                        <label class="form-check-label" for="rememberMe">Remember me</label>
+                        <a href="#" class="auth-link float-end" onclick="showPage('forgotPage')">Forgot password?</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mb-3"><i class="bi bi-box-arrow-in-right me-1"></i>Sign In</button>
+                </form>
+            </div>
+        </div>
+
+      
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        
+        // Password visibility toggle
+        function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const toggle = input.parentNode.querySelector('.password-toggle i');
+
+        if (input.type === 'password') {
+        input.type = 'text';
+        toggle.classList.remove('fa-eye');
+        toggle.classList.add('fa-eye-slash');
+        } else {
+        input.type = 'password';
+        toggle.classList.remove('fa-eye-slash');
+        toggle.classList.add('fa-eye');
+        }
+        }
+
+        // Form submissions
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Add login logic here
+        console.log('Login submitted');
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const password = document.getElementById('registerPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (password !== confirmPassword) {
+        alert('Passwords do not match!');
+        return;
+        }
+
+        // Add registration logic here
+        console.log('Registration submitted');
+        });
+
+        document.getElementById('forgotForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        document.getElementById('resetSuccess').style.display = 'block';
+
+        // Add forgot password logic here
+        console.log('Password reset requested');
+        });
+
+        // Initialize tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    </script>
+</body>
+</html>

@@ -7,8 +7,8 @@ using InTagWeb.Filters;
 
 namespace InTagWeb.Controllers
 {
-    [AllowAnonymous]
-    //[Authorize]
+    //[AllowAnonymous]
+    [Authorize]
     [RequireModule(PlatformModule.Asset)]
     public class AssetDashboardController : Controller
     {
@@ -22,7 +22,7 @@ namespace InTagWeb.Controllers
         // GET: /AssetDashboard
         public async Task<IActionResult> Index()
         {
-            ViewData["Title"] = "Asset Dashboard";
+            ViewData["Title"] = "Dashboard";
             ViewData["Module"] = "Assets";
             var dashboard = await _assetService.GetDashboardAsync();
             return View(dashboard);

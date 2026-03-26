@@ -10,5 +10,6 @@ namespace InTagWeb.Configuration
             services.AddScoped<IMaintenanceService, MaintenanceService>();
             return services;
         }
+
     }
 }

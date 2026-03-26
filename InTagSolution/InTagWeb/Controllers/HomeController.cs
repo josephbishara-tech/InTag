@@ -5,8 +5,8 @@ using System.Diagnostics;
 
 namespace InTagWeb.Controllers
 {
-    //[Authorize]
-    [AllowAnonymous]
+    [Authorize]
+    //[AllowAnonymous]
     public class HomeController : Controller
     {
         public IActionResult Index()

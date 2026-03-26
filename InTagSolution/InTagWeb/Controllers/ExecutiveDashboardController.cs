@@ -5,8 +5,8 @@ using InTagViewModelLayer.Integration;
 
 namespace InTagWeb.Controllers
 {
-    //[Authorize]
-    [AllowAnonymous]
+    [Authorize]
+    //[AllowAnonymous]
     public class ExecutiveDashboardController : Controller
     {
         private readonly IIntegrationService _integrationService;
@@ -18,19 +18,22 @@ namespace InTagWeb.Controllers
 
         public async Task<IActionResult> Index()
         {
-            ViewData["Title"] = "Executive Dashboard";
+            ViewData["Title"] = "Dashboard";
+            ViewData["Module"] = "Dashboard";
             return View(await _integrationService.GetExecutiveDashboardAsync());
         }
 
         public async Task<IActionResult> Compliance()
         {
             ViewData["Title"] = "Compliance Report";
+            ViewData["Module"] = "Dashboard";
             return View(await _integrationService.GetComplianceReportAsync());
         }
 
         public async Task<IActionResult> AuditTrail(AuditTrailFilterVm filter)
         {
             ViewData["Title"] = "Audit Trail";
+            ViewData["Module"] = "Dashboard";
             ViewBag.CurrentFilter = filter;
             return View(await _integrationService.GetAuditTrailAsync(filter));
         }
