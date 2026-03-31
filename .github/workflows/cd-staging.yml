@@ -21,7 +21,7 @@ jobs:
       url: https://staging.intag.io
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: intag-web-${{ github.event.workflow_run.head_sha }}
           path: ./publish
