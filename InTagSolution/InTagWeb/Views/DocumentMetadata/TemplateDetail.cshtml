@@ -1,0 +1,146 @@
+@model InTagViewModelLayer.Document.MetadataTemplateDetailVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <div>
+        <h1><i class="bi bi-grid-3x3-gap me-2"></i>@Model.Name</h1>
+        <p class="text-muted mb-0">
+            @(Model.Description ?? "No description")
+            <span class="badge bg-info ms-2">@(Model.ApplicableDocType?.ToString() ?? "All Types")</span>
+            @if (Model.IsDefault)
+            {
+                <span class="badge bg-success ms-1">Default</span>
+            }
+        </p>
+    </div>
+    <a asp-action="Templates" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+
+<div class="row g-3">
+    <!-- Fields List -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Fields (@Model.Fields.Count)</h6></div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light"><tr><th>#</th><th>Field Name</th><th>Label</th><th>Type</th><th>Required</th><th>Default</th><th></th></tr></thead>
+                    <tbody>
+                        @if (!Model.Fields.Any())
+                        {
+                            <tr><td colspan="7" class="text-center text-muted py-4">No fields yet. Add one using the form.</td></tr>
+                        }
+                        @foreach (var f in Model.Fields)
+                        {
+                            <tr class="@(f.IsSystem ? "table-light" : "")">
+                                <td><small class="text-muted">@f.SortOrder</small></td>
+                                <td>
+                                    <strong>@f.FieldName</strong>
+                                    @if (f.IsSystem)
+                                    {
+                                        <span class="badge bg-secondary ms-1">System</span>
+                                    }
+                                </td>
+                                <td>@f.Label</td>
+                                <td>
+                                    <span class="badge bg-light text-dark">@f.FieldTypeDisplay</span>
+                                    @if (f.OptionsList.Any())
+                                    {
+                                        <br />
+                                        <small class="text-muted">@string.Join(", ", f.OptionsList.Take(3))@(f.OptionsList.Count > 3 ? "..." : "")</small>
+                                    }
+                                </td>
+                                <td>
+                                    @if (f.IsRequired)
+                                    {
+                                        <span class="badge bg-warning text-dark">Required</span>
+                                    }
+                                </td>
+                                <td><small class="text-muted">@(f.DefaultValue ?? "—")</small></td>
+                                <td>
+                                    @if (!f.IsSystem)
+                                    {
+                                        <form asp-action="RemoveField" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="fieldId" value="@f.Id" />
+                                            <input type="hidden" name="templateId" value="@Model.Id" />
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this field?')"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Field Form -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Add Field</h6></div>
+            <div class="card-body">
+                <form asp-action="AddField" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="TemplateId" value="@Model.Id" />
+
+                    <div class="mb-2">
+                        <label class="form-label small">Field Name</label>
+                        <input name="FieldName" class="form-control form-control-sm" required placeholder="e.g. ProjectCode" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Display Label</label>
+                        <input name="DisplayLabel" class="form-control form-control-sm" placeholder="e.g. Project Code" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Type</label>
+                        <select name="FieldType" asp-items="ViewBag.FieldTypes" class="form-select form-select-sm" id="fieldTypeSelect"></select>
+                    </div>
+                    <div class="mb-2 d-none" id="optionsGroup">
+                        <label class="form-label small">Options (pipe-delimited)</label>
+                        <input name="Options" class="form-control form-control-sm" placeholder="Option1|Option2|Option3" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Default Value</label>
+                        <input name="DefaultValue" class="form-control form-control-sm" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Placeholder</label>
+                        <input name="Placeholder" class="form-control form-control-sm" />
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Help Text</label>
+                        <input name="HelpText" class="form-control form-control-sm" />
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-6">
+                            <label class="form-label small">Sort Order</label>
+                            <input name="SortOrder" type="number" class="form-control form-control-sm" value="@(Model.Fields.Count + 1)" />
+                        </div>
+                        <div class="col-6 d-flex align-items-end">
+                            <div class="form-check">
+                                <input name="IsRequired" type="checkbox" class="form-check-input" value="true" />
+                                <label class="form-check-label small">Required</label>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">
+                        <i class="bi bi-plus-circle me-1"></i>Add Field
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const fieldType = document.getElementById('fieldTypeSelect');
+        const optionsGroup = document.getElementById('optionsGroup');
+        fieldType.addEventListener('change', function() {
+            const val = this.options[this.selectedIndex].text;
+            optionsGroup.classList.toggle('d-none', val !== 'Dropdown' && val !== 'MultiSelect');
+        });
+        fieldType.dispatchEvent(new Event('change'));
+    </script>
+}

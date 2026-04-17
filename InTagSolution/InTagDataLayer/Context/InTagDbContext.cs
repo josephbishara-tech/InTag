@@ -1,6 +1,7 @@
 using InTagEntitiesLayer.Asset;
 using InTagEntitiesLayer.Common;
 using InTagEntitiesLayer.Document;
+using InTagEntitiesLayer.ERP;
 using InTagEntitiesLayer.Identity;
 using InTagEntitiesLayer.Interfaces;
 using InTagEntitiesLayer.Inventory;
@@ -45,10 +46,14 @@ namespace InTagDataLayer.Context
         public DbSet<DocumentFile> DocumentFiles => Set<DocumentFile>();
         public DbSet<ApprovalMatrix> ApprovalMatrices => Set<ApprovalMatrix>();
         public DbSet<DistributionRecord> DistributionRecords => Set<DistributionRecord>();
-
         public DbSet<UserFolder> UserFolders => Set<UserFolder>();
         public DbSet<UserFile> UserFiles => Set<UserFile>();
         public DbSet<InTagEntitiesLayer.Document.FileShare> FileShares => Set<InTagEntitiesLayer.Document.FileShare>();
+        public DbSet<MetadataTemplate> MetadataTemplates => Set<MetadataTemplate>();
+        public DbSet<MetadataFieldDefinition> MetadataFieldDefinitions => Set<MetadataFieldDefinition>();
+        public DbSet<DocumentMetadata> DocumentMetadatas => Set<DocumentMetadata>();
+        public DbSet<DocumentTag> DocumentTags => Set<DocumentTag>();
+        public DbSet<DocumentLink> DocumentLinks => Set<DocumentLink>();
 
         // Manufacturing Module
         public DbSet<Product> Products => Set<Product>();
@@ -83,6 +88,40 @@ namespace InTagDataLayer.Context
         public DbSet<WorkflowInstance> WorkflowInstances => Set<WorkflowInstance>();
         public DbSet<WorkflowAction> WorkflowActions => Set<WorkflowAction>();
         public DbSet<Notification> Notifications => Set<Notification>();
+
+        // ERP - Sales
+        public DbSet<Customer> Customers => Set<Customer>();
+        public DbSet<Pricelist> Pricelists => Set<Pricelist>();
+        public DbSet<PricelistLine> PricelistLines => Set<PricelistLine>();
+        public DbSet<SalesTeam> SalesTeams => Set<SalesTeam>();
+        public DbSet<CommissionRule> CommissionRules => Set<CommissionRule>();
+        public DbSet<Quotation> Quotations => Set<Quotation>();
+        public DbSet<QuotationLine> QuotationLines => Set<QuotationLine>();
+        public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
+        public DbSet<SalesOrderLine> SalesOrderLines => Set<SalesOrderLine>();
+
+        // ERP - Purchase
+        public DbSet<Rfq> Rfqs => Set<Rfq>();
+        public DbSet<RfqLine> RfqLines => Set<RfqLine>();
+        public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+        public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
+
+        // ERP - Accounting
+        public DbSet<Account> Accounts => Set<Account>();
+        public DbSet<CostCenter> CostCenters => Set<CostCenter>();
+        public DbSet<Journal> Journals => Set<Journal>();
+        public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+        public DbSet<JournalEntryLine> JournalEntryLines => Set<JournalEntryLine>();
+        public DbSet<Invoice> Invoices => Set<Invoice>();
+        public DbSet<InvoiceLine> InvoiceLines => Set<InvoiceLine>();
+        public DbSet<Payment> Payments => Set<Payment>();
+        public DbSet<Budget> Budgets => Set<Budget>();
+
+        // ERP - Stock Move
+        public DbSet<StockMove> StockMoves => Set<StockMove>();
+        public DbSet<StockMoveLine> StockMoveLines => Set<StockMoveLine>();
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

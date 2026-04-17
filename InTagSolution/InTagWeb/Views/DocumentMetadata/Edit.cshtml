@@ -1,0 +1,164 @@
+@model InTagViewModelLayer.Document.MetadataEditVm
+@using InTagEntitiesLayer.Enums
+
+<div class="content-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-tags me-2"></i>Edit Metadata — @Model.EntityName</h1>
+    <div class="d-flex gap-2">
+        @if (Model.DocumentId.HasValue)
+        {
+            <a asp-controller="Document" asp-action="Details" asp-route-id="@Model.DocumentId" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+        }
+        else
+        {
+
+            <a asp-controller="DocumentRepository" asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Metadata Fields (@Model.Fields.Count)</h6></div>
+            <div class="card-body">
+                <form asp-action="Edit" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="DocumentId" />
+                    <input type="hidden" asp-for="UserFileId" />
+                    <input type="hidden" asp-for="UserFolderId" />
+                    <input type="hidden" asp-for="EntityName" />
+
+                    @if (!Model.Fields.Any())
+                    {
+                        <p class="text-muted">No metadata fields configured. Apply a template to get started.</p>
+                    }
+
+                    @for (var i = 0; i < Model.Fields.Count; i++)
+                    {
+                        var field = Model.Fields[i];
+                        <input type="hidden" name="Fields[@i].MetadataId" value="@field.MetadataId" />
+                        <input type="hidden" name="Fields[@i].FieldDefinitionId" value="@field.FieldDefinitionId" />
+                        <input type="hidden" name="Fields[@i].FieldName" value="@field.FieldName" />
+                        <input type="hidden" name="Fields[@i].Label" value="@field.Label" />
+                        <input type="hidden" name="Fields[@i].FieldType" value="@((int)field.FieldType)" />
+                        <input type="hidden" name="Fields[@i].Options" value="@field.Options" />
+                        <input type="hidden" name="Fields[@i].IsRequired" value="@field.IsRequired" />
+                        <input type="hidden" name="Fields[@i].Placeholder" value="@field.Placeholder" />
+                        <input type="hidden" name="Fields[@i].HelpText" value="@field.HelpText" />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                @field.Label
+                                @if (field.IsRequired)
+                                {
+                                    <span class="text-danger">*</span>
+                                }
+                            </label>
+
+                            @switch (field.FieldType)
+                            {
+                                case MetadataFieldType.Text:
+                                case MetadataFieldType.Url:
+                                case MetadataFieldType.Email:
+                                    <input name="Fields[@i].Value" value="@field.Value" class="form-control"
+                                           type="@(field.FieldType == MetadataFieldType.Email ? "email" : field.FieldType == MetadataFieldType.Url ? "url" : "text")"
+                                           placeholder="@field.Placeholder" />
+                                    break;
+                                case MetadataFieldType.TextArea:
+                                    <textarea name="Fields[@i].Value" class="form-control" rows="3" placeholder="@field.Placeholder">@field.Value</textarea>
+                                    break;
+                                case MetadataFieldType.Number:
+                                    <input name="Fields[@i].Value" value="@field.Value" class="form-control" type="number" placeholder="@field.Placeholder" />
+                                    break;
+                                case MetadataFieldType.Decimal:
+                                    <input name="Fields[@i].Value" value="@field.Value" class="form-control" type="number" step="0.01" placeholder="@field.Placeholder" />
+                                    break;
+                                case MetadataFieldType.Date:
+                                    <input name="Fields[@i].Value" value="@field.Value" class="form-control" type="date" />
+                                    break;
+                                case MetadataFieldType.DateTime:
+                                    <input name="Fields[@i].Value" value="@field.Value" class="form-control" type="datetime-local" />
+                                    break;
+                                case MetadataFieldType.Boolean:
+                                    <div class="form-check">
+                                        <input name="Fields[@i].Value" type="checkbox" class="form-check-input" value="true"
+                                        @(field.Value == "true" ? "checked" : "") />
+                                        <label class="form-check-label">Yes</label>
+                                    </div>
+                                    break;
+                                case MetadataFieldType.Dropdown:
+                                    <select name="Fields[@i].Value" class="form-select">
+                                        <option value="">— Select —</option>
+                                        @foreach (var opt in field.OptionsList)
+                                        {
+                                            <option value="@opt" selected="@(field.Value == opt)">@opt</option>
+                                        }
+                                    </select>
+                                    break;
+                                case MetadataFieldType.MultiSelect:
+                                    var selectedValues = field.Value?.Split(',') ?? Array.Empty<string>();
+                                    @foreach (var opt in field.OptionsList)
+                                    {
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input multi-check" data-index="@i"
+                                                   value="@opt" @(selectedValues.Contains(opt) ? "checked" : "") />
+                                            <label class="form-check-label">@opt</label>
+                                        </div>
+                                    }
+                                    <input type="hidden" name="Fields[@i].Value" id="multiValue_@i" value="@field.Value" />
+                                    break;
+                                default:
+                                    <input name="Fields[@i].Value" value="@field.Value" class="form-control" placeholder="@field.Placeholder" />
+                                    break;
+                            }
+
+                            @if (!string.IsNullOrEmpty(field.HelpText))
+                            {
+                                <small class="form-text text-muted">@field.HelpText</small>
+                            }
+                        </div>
+                    }
+
+                    @if (Model.Fields.Any())
+                    {
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Save Metadata</button>
+                    }
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar: Apply Template -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-transparent"><h6 class="mb-0 fw-bold">Apply Template</h6></div>
+            <div class="card-body">
+                <form asp-action="ApplyTemplate" method="post" class="d-flex gap-2">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="documentId" value="@Model.DocumentId" />
+                    <input type="hidden" name="userFileId" value="@Model.UserFileId" />
+                    <input type="hidden" name="userFolderId" value="@Model.UserFolderId" />
+                    <select name="templateId" asp-items="ViewBag.Templates" class="form-select form-select-sm">
+                        <option value="">— Select —</option>
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Apply</button>
+                </form>
+                <small class="text-muted mt-1 d-block">Adds template fields without overwriting existing values.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Multi-select checkboxes → hidden field
+        document.querySelectorAll('.multi-check').forEach(cb => {
+            cb.addEventListener('change', function() {
+                var idx = this.dataset.index;
+                var checked = document.querySelectorAll(`.multi-check[data-index="${idx}"]:checked`);
+                var values = Array.from(checked).map(c => c.value).join(',');
+                document.getElementById('multiValue_' + idx).value = values;
+            });
+        });
+    </script>
+}

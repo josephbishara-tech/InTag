@@ -3,47 +3,155 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:models="clr-namespace:InTagMobile.Models"
              x:Class="InTagMobile.Views.RequestListPage"
-             Title="Tracking Requests">
-    <ContentPage.Content>
-        <Grid RowDefinitions="*">
-            <CollectionView x:Name="RequestList" SelectionMode="Single"
-                            SelectionChanged="OnRequestSelected">
+             Shell.NavBarIsVisible="False"
+             BackgroundColor="#F4F6FA">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- Header -->
+        <Grid BackgroundColor="#1A365D" Padding="20,40,20,15">
+            <VerticalStackLayout Spacing="5">
+                <Label Text="Tracking Requests"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       TextColor="White" />
+
+                <Label Text="Monitor and manage asset tracking"
+                       FontSize="13"
+                       TextColor="#D1D5DB" />
+            </VerticalStackLayout>
+        </Grid>
+
+        <!-- Content -->
+        <RefreshView Grid.Row="1"
+                     x:Name="RefreshContainer"
+                     Refreshing="OnRefreshing">
+
+            <CollectionView x:Name="RequestList"
+                            SelectionMode="None"
+                            Margin="10">
+
+                <!-- Empty View -->
                 <CollectionView.EmptyView>
-                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Padding="20">
-                        <Label Text="No tracking requests" FontSize="18"
-                               TextColor="Gray" HorizontalTextAlignment="Center" />
-                        <Label Text="Create a request from the web portal" FontSize="14"
-                               TextColor="LightGray" HorizontalTextAlignment="Center" />
+                    <VerticalStackLayout VerticalOptions="Center"
+                                         HorizontalOptions="Center"
+                                         Spacing="10">
+
+                        <Label Text="📭"
+                               FontSize="50"
+                               HorizontalTextAlignment="Center"/>
+
+                        <Label Text="No tracking requests"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="#374151"
+                               HorizontalTextAlignment="Center"/>
+
+                        <Label Text="Create a request from the web portal"
+                               FontSize="13"
+                               TextColor="#9CA3AF"
+                               HorizontalTextAlignment="Center"/>
                     </VerticalStackLayout>
                 </CollectionView.EmptyView>
+
+                <!-- Items -->
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="models:TrackingRequestDto">
-                        <Frame Margin="10,5" Padding="15" CornerRadius="8"
-                               HasShadow="True" BackgroundColor="White">
-                            <VerticalStackLayout Spacing="4">
-                                <HorizontalStackLayout Spacing="10">
-                                    <Label Text="{Binding RequestNumber}" FontAttributes="Bold"
-                                           FontSize="16" TextColor="#1A365D" />
-                                    <Frame BackgroundColor="#2D5A8E" CornerRadius="4"
-                                           Padding="6,2" HasShadow="False" VerticalOptions="Center">
-                                        <Label Text="{Binding StatusDisplay}" FontSize="11" TextColor="White" />
+
+                        <Frame Margin="0,6"
+                               Padding="15"
+                               CornerRadius="18"
+                               HasShadow="True"
+                               BackgroundColor="White">
+
+                            <Frame.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnRequestTapped"
+                                                      CommandParameter="{Binding .}" />
+                            </Frame.GestureRecognizers>
+
+                            <VerticalStackLayout Spacing="12">
+
+                                <!-- Top -->
+                                <Grid ColumnDefinitions="*,Auto">
+
+                                    <Label Text="{Binding RequestNumber}"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           TextColor="#1A365D" />
+
+                                    <!-- Status -->
+                                    <Frame Grid.Column="1"
+                                           BackgroundColor="{Binding StatusDisplay, Converter={StaticResource StatusColorConverter}}"
+                                           CornerRadius="12"
+                                           Padding="10,4"
+                                           HasShadow="False">
+
+                                        <Label Text="{Binding StatusDisplay}"
+                                               FontSize="11"
+                                               TextColor="White"
+                                               FontAttributes="Bold"/>
                                     </Frame>
-                                </HorizontalStackLayout>
-                                <Label Text="{Binding Title}" FontSize="14" TextColor="Gray" />
-                                <HorizontalStackLayout Spacing="10" Margin="0,4,0,0">
-                                    <Label Text="{Binding LocationName}" FontSize="12" TextColor="#666" />
-                                    <Label Text="{Binding ScannedCount, StringFormat='{0} scanned'}"
-                                           FontSize="12" TextColor="#666" />
-                                    <Label Text="{Binding TotalAssets, StringFormat='of {0}'}"
-                                           FontSize="12" TextColor="#666" />
-                                </HorizontalStackLayout>
-                                <ProgressBar Progress="{Binding ProgressPercent, Converter={StaticResource PercentToProgressConverter}}"
-                                             ProgressColor="#1A365D" />
+
+                                </Grid>
+
+                                <!-- Title -->
+                                <Label Text="{Binding Title}"
+                                       FontSize="14"
+                                       TextColor="#4B5563"
+                                       LineBreakMode="TailTruncation" />
+
+                                <!-- Info -->
+                                <Grid ColumnDefinitions="*,Auto">
+
+                                    <!-- Location -->
+                                    <HorizontalStackLayout Spacing="4">
+                                        <Label Text="📍" FontSize="12"/>
+                                        <Label Text="{Binding LocationName}"
+                                               FontSize="12"
+                                               TextColor="#6B7280" />
+                                    </HorizontalStackLayout>
+
+                                    <!-- Count -->
+                                    <HorizontalStackLayout Grid.Column="1" Spacing="4">
+                                        <Label Text="📦" FontSize="12"/>
+                                        <Label FontSize="12" TextColor="#6B7280">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{Binding ScannedCount}" FontAttributes="Bold"/>
+                                                    <Span Text=" / "/>
+                                                    <Span Text="{Binding TotalAssets}"/>
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                    </HorizontalStackLayout>
+
+                                </Grid>
+
+                                <!-- Progress -->
+                                <Grid RowDefinitions="Auto,Auto">
+
+                                    <ProgressBar Grid.Row="0"
+                                                 Progress="{Binding ProgressPercent, Converter={StaticResource PercentToProgressConverter}}"
+                                                 ProgressColor="#1A365D"
+                                                 BackgroundColor="#E5E7EB"
+                                                 HeightRequest="6"/>
+
+                                    <Label Grid.Row="1"
+                                           Text="{Binding ProgressPercent, StringFormat='{0:N0}% completed'}"
+                                           FontSize="11"
+                                           TextColor="#9CA3AF"
+                                           HorizontalOptions="End"/>
+
+                                </Grid>
+
                             </VerticalStackLayout>
                         </Frame>
+
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
-        </Grid>
-    </ContentPage.Content>
+
+        </RefreshView>
+
+    </Grid>
 </ContentPage>

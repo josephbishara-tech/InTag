@@ -24,8 +24,16 @@ public static class MauiProgram
         builder.Logging.AddDebug();
 #endif
 
+
+
         // Services
         builder.Services.AddSingleton<IApiService, ApiService>();
+
+#if ANDROID
+        builder.Services.AddSingleton<IZebraScannerService, ZebraScannerService>();
+#else
+        builder.Services.AddSingleton<IZebraScannerService, FallbackScannerService>();
+#endif
 
         // ViewModels
         builder.Services.AddTransient<LoginViewModel>();

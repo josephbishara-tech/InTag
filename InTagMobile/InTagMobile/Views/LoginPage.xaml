@@ -3,30 +3,89 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="InTagMobile.Views.LoginPage"
              Shell.NavBarIsVisible="False"
-             BackgroundColor="#1A365D">
-    <ContentPage.Content>
-        <ScrollView>
-            <VerticalStackLayout Spacing="20" Padding="30" VerticalOptions="Center">
-                <Label Text="InTag" FontSize="42" FontAttributes="Bold"
-                       HorizontalTextAlignment="Center" TextColor="White" />
-                <Label Text="Asset Tracking" FontSize="18"
-                       HorizontalTextAlignment="Center" TextColor="#8BADD6" />
-                <BoxView HeightRequest="1" Color="#2D5A8E" Margin="0,10" />
-                <Frame BackgroundColor="White" CornerRadius="12" Padding="20" HasShadow="True">
-                    <VerticalStackLayout Spacing="15">
-                        <Entry x:Name="EmailEntry" Placeholder="Email" Keyboard="Email" />
-                        <Entry x:Name="PasswordEntry" Placeholder="Password" IsPassword="True" />
-                        <Label x:Name="ErrorLabel" TextColor="Red" FontSize="12" />
-                        <Button x:Name="LoginBtn" Text="Sign In"
-                                Clicked="OnLoginClicked"
-                                BackgroundColor="#1A365D" TextColor="White"
-                                CornerRadius="8" HeightRequest="48" />
-                        <ActivityIndicator x:Name="LoadingIndicator"
-                                           IsRunning="False" IsVisible="False"
-                                           Color="#1A365D" />
-                    </VerticalStackLayout>
-                </Frame>
+             BackgroundColor="#FBE8CE">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="25" Spacing="30" VerticalOptions="Center">
+
+            <!-- Header -->
+            <VerticalStackLayout Spacing="5">
+                <Image Source="loginlogo.png"
+                       HeightRequest="100"
+                       Aspect="AspectFit"
+                       HorizontalOptions="Center" />
+          
+                <Label Text="Asset Tracking System"
+                       FontSize="14"
+                       HorizontalTextAlignment="Center"
+                       TextColor="#6B7280" />
             </VerticalStackLayout>
-        </ScrollView>
-    </ContentPage.Content>
+
+            <!-- Card -->
+            <Frame BackgroundColor="White"
+                   CornerRadius="20"
+                   Padding="20"
+                   HasShadow="True">
+
+                <VerticalStackLayout Spacing="18">
+
+                    <!-- Email -->
+                    <Frame Padding="10"
+                           CornerRadius="12"
+                           BackgroundColor="#F9FAFB"
+                           HasShadow="False">
+
+                        <Entry x:Name="EmailEntry"
+                               Placeholder="Email Address"
+                               Keyboard="Email"
+                               TextColor="Black"
+                               PlaceholderColor="#9CA3AF" />
+                    </Frame>
+
+                    <!-- Password -->
+                    <Frame Padding="10"
+                           CornerRadius="12"
+                           BackgroundColor="#F9FAFB"
+                           HasShadow="False">
+
+                        <Entry x:Name="PasswordEntry"
+                               Placeholder="Password"
+                               IsPassword="True"
+                               TextColor="Black"
+                               PlaceholderColor="#9CA3AF" />
+                    </Frame>
+
+                    <!-- Error -->
+                    <Label x:Name="ErrorLabel"
+                           TextColor="#EF4444"
+                           FontSize="12"
+                           IsVisible="False" />
+
+                    <!-- Button -->
+                    <Button x:Name="LoginBtn"
+                            Text="Sign In"
+                            Clicked="OnLoginClicked"
+                            BackgroundColor="#1A365D"
+                            TextColor="White"
+                            CornerRadius="12"
+                            HeightRequest="50"
+                            FontAttributes="Bold" />
+
+                    <!-- Loading -->
+                    <ActivityIndicator x:Name="LoadingIndicator"
+                                       IsRunning="False"
+                                       IsVisible="False"
+                                       Color="#1A365D" />
+
+                </VerticalStackLayout>
+            </Frame>
+
+            <!-- Footer -->
+            <Label Text="Secure Login • Powered by IdenTech"
+                   FontSize="12"
+                   HorizontalTextAlignment="Center"
+                   TextColor="#9CA3AF" />
+
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentPage>

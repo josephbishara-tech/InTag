@@ -13,6 +13,7 @@ namespace InTagWeb.Configuration
             services.AddScoped<IDocumentFileService, DocumentFileService>();
             services.AddScoped<IApprovalMatrixService, ApprovalMatrixService>();
             services.AddScoped<IUserRepositoryService, UserRepositoryService>();
+            services.AddScoped<IDocumentMetadataService, DocumentMetadataService>();
 
             // File storage — register as pre-built singleton
             var basePath = configuration.GetValue<string>("FileStorage:LocalPath") ?? "wwwroot/InTagFiles";

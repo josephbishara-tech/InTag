@@ -4,6 +4,7 @@ using InTagEntitiesLayer.Common;
 using InTagEntitiesLayer.Identity;
 using InTagEntitiesLayer.Interfaces;
 using InTagLogicLayer.Asset;
+using InTagLogicLayer.Document;
 using InTagLogicLayer.Services;
 using InTagWeb.Configuration;
 using InTagWeb.Middleware;
@@ -31,7 +32,7 @@ builder.Services.AddInTagInventoryServices();
 builder.Services.AddInTagWorkflowServices();
 builder.Services.AddInTagIntegrationServices();
 builder.Services.AddScoped<IAssetTrackingService, AssetTrackingService>();
- 
+builder.Services.AddInTagErpServices();
 
 
 // ── DbContext (main tenant DB) ───────────
@@ -48,6 +49,8 @@ using (var scope = app.Services.CreateScope())
     await AuthServiceRegistration.SeedRolesAsync(scope.ServiceProvider);
     await AuthServiceRegistration.SeedAdminUserAsync(scope.ServiceProvider);
     await TenantServiceRegistration.SeedDefaultTenantAsync(scope.ServiceProvider);
+    var metaService = scope.ServiceProvider.GetRequiredService<IDocumentMetadataService>();
+    await metaService.SeedSystemFieldsAsync();
 }
  
 // ═══ MIDDLEWARE PIPELINE (ORDER MATTERS!) ═══

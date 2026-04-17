@@ -64,6 +64,8 @@ namespace InTagViewModelLayer.Asset
         public int AssetId { get; set; }
         public string AssetCode { get; set; } = null!;
         public string AssetName { get; set; } = null!;
+        public string? Barcode { get; set; }
+        public string? SerialNumber { get; set; }
         public TrackingLineStatus Status { get; set; }
         public string StatusDisplay => Status.ToString();
         public DateTimeOffset? ScannedDate { get; set; }

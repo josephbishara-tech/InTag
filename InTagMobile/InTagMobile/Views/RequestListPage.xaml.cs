@@ -24,20 +24,32 @@ public partial class RequestListPage : ContentPage
         try
         {
             var items = await _api.GetRequestsAsync();
+            System.Diagnostics.Debug.WriteLine($"[RequestList] Loaded {items.Count} items");
             RequestList.ItemsSource = items;
         }
         catch (Exception ex)
         {
-            await DisplayAlert("Error", ex.Message, "OK");
+            System.Diagnostics.Debug.WriteLine($"[RequestList] Error: {ex.Message}");
+            await DisplayAlert("Error", ex.ToString(), "OK");
         }
     }
 
-    private async void OnRequestSelected(object? sender, SelectionChangedEventArgs e)
+    private async void OnRequestTapped(object? sender, TappedEventArgs e)
     {
-        if (e.CurrentSelection.FirstOrDefault() is TrackingRequestDto request)
+        if (e.Parameter is TrackingRequestDto request)
         {
-            RequestList.SelectedItem = null;
+            System.Diagnostics.Debug.WriteLine($"[RequestList] Tapped: {request.RequestNumber} ID={request.Id}");
             await Shell.Current.GoToAsync($"session?requestId={request.Id}");
         }
+        else
+        {
+            System.Diagnostics.Debug.WriteLine("[RequestList] Tapped but parameter is null or wrong type");
+        }
+    }
+
+    private async void OnRefreshing(object? sender, EventArgs e)
+    {
+        await LoadRequestsAsync();
+        RefreshContainer.IsRefreshing = false;
     }
 }

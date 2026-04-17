@@ -12,5 +12,6 @@ namespace InTagLogicLayer.Asset
         Task CancelRequestAsync(int id);
         Task<TrackingLineVm> SubmitScanAsync(TrackingScanSubmitVm model);
         Task MarkLineMissingAsync(int lineId);
+        Task<TrackingLineVm> FindLineByScannedCodeAsync(int requestId, string scannedCode);
     }
 }

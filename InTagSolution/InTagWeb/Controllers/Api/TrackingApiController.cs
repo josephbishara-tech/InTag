@@ -59,5 +59,25 @@ namespace InTagWeb.Controllers.Api
             try { await _trackingService.MarkLineMissingAsync(lineId); return Ok(); }
             catch (KeyNotFoundException) { return NotFound(); }
         }
+
+        /// <summary>
+        /// Scan barcode → find asset → return matching tracking line from a request
+        /// </summary>
+        [HttpGet("requests/{requestId}/find-by-scan")]
+        public async Task<IActionResult> FindByBarcode(int requestId, [FromQuery] string code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+                return BadRequest(new { error = "Scan code is required." });
+
+            try
+            {
+                var result = await _trackingService.FindLineByScannedCodeAsync(requestId, code);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { error = ex.Message });
+            }
+        }
     }
 }

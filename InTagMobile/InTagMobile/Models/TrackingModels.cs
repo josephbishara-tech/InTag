@@ -2,6 +2,8 @@ using System.Text.Json.Serialization;
 
 namespace InTagMobile.Models;
 
+// ── Auth ──
+
 public class LoginRequest
 {
     [JsonPropertyName("email")]
@@ -11,14 +13,52 @@ public class LoginRequest
     public string Password { get; set; } = string.Empty;
 }
 
+/// <summary>
+/// Wrapper for the API envelope: { "data": { ... } }
+/// </summary>
+public class ApiResponse<T>
+{
+    [JsonPropertyName("data")]
+    public T? Data { get; set; }
+}
+
 public class LoginResponse
 {
-    [JsonPropertyName("token")]
-    public string Token { get; set; } = string.Empty;
+    [JsonPropertyName("accessToken")]
+    public string? AccessToken { get; set; }
 
-    [JsonPropertyName("userName")]
-    public string UserName { get; set; } = string.Empty;
+    [JsonPropertyName("refreshToken")]
+    public string? RefreshToken { get; set; }
+
+    [JsonPropertyName("accessTokenExpiration")]
+    public DateTimeOffset? AccessTokenExpiration { get; set; }
+
+    [JsonPropertyName("user")]
+    public UserInfo? User { get; set; }
 }
+
+public class UserInfo
+{
+    [JsonPropertyName("id")]
+    public Guid Id { get; set; }
+
+    [JsonPropertyName("email")]
+    public string Email { get; set; } = string.Empty;
+
+    [JsonPropertyName("firstName")]
+    public string? FirstName { get; set; }
+
+    [JsonPropertyName("lastName")]
+    public string? LastName { get; set; }
+
+    [JsonPropertyName("tenantId")]
+    public Guid TenantId { get; set; }
+
+    [JsonPropertyName("roles")]
+    public List<string> Roles { get; set; } = new();
+}
+
+// ── Tracking ──
 
 public class TrackingRequestDto
 {
@@ -93,6 +133,12 @@ public class TrackingLineDto
 
     [JsonPropertyName("assetName")]
     public string AssetName { get; set; } = string.Empty;
+
+    [JsonPropertyName("barcode")]
+    public string? Barcode { get; set; }
+
+    [JsonPropertyName("serialNumber")]
+    public string? SerialNumber { get; set; }
 
     [JsonPropertyName("statusDisplay")]
     public string StatusDisplay { get; set; } = string.Empty;

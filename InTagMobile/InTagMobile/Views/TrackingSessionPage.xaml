@@ -4,10 +4,12 @@
              xmlns:models="clr-namespace:InTagMobile.Models"
              xmlns:zxing="clr-namespace:ZXing.Net.Maui.Controls;assembly=ZXing.Net.MAUI.Controls"
              x:Class="InTagMobile.Views.TrackingSessionPage"
+             BackgroundColor="#FBE8CE"
              Title="Scanning">
     <ContentPage.Content>
-        <Grid RowDefinitions="Auto,300,Auto,*,Auto">
+        <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
 
+            <!-- Row 0: Stats Header -->
             <Frame Grid.Row="0" BackgroundColor="#1A365D" CornerRadius="0"
                    Padding="15" HasShadow="False">
                 <Grid ColumnDefinitions="*,*,*">
@@ -35,40 +37,84 @@
                 </Grid>
             </Frame>
 
-            <zxing:CameraBarcodeReaderView Grid.Row="1"
-                x:Name="BarcodeReader"
-                BarcodesDetected="OnBarcodesDetected" />
-
-            <Frame Grid.Row="2" Margin="10,5" Padding="10" CornerRadius="8"
-                   BackgroundColor="#F0F8FF" HasShadow="False">
-                <Label x:Name="LastScanLabel" Text="Point camera at asset QR/barcode"
-                       FontSize="14" HorizontalTextAlignment="Center" />
-            </Frame>
-
-            <CollectionView Grid.Row="3" x:Name="PendingList" Margin="10,0">
-                <CollectionView.Header>
-                    <Label Text="Pending Assets" FontAttributes="Bold" FontSize="14" Margin="0,5" />
-                </CollectionView.Header>
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:TrackingLineDto">
-                        <Grid ColumnDefinitions="*,Auto" Padding="10,8">
-                            <VerticalStackLayout>
-                                <Label Text="{Binding AssetCode}" FontAttributes="Bold"
-                                       FontSize="14" TextColor="#1A365D" />
-                                <Label Text="{Binding AssetName}" FontSize="12" TextColor="Gray" />
-                            </VerticalStackLayout>
-                            <Label Grid.Column="1" Text="⏳" FontSize="20" VerticalOptions="Center" />
-                        </Grid>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-
-            <Grid Grid.Row="4" ColumnDefinitions="*,*" Padding="10" ColumnSpacing="10">
-                <Button Text="Toggle Scanner" Clicked="OnToggleScanner"
-                        BackgroundColor="#2D5A8E" TextColor="White" CornerRadius="8" />
-                <Button Grid.Column="1" Text="Complete" Clicked="OnCompleteClicked"
-                        BackgroundColor="#28A745" TextColor="White" CornerRadius="8" />
+            <!-- Row 1: Scanner Mode Selector -->
+            <Grid Grid.Row="1" ColumnDefinitions="*,*,*" Padding="10,5" ColumnSpacing="5">
+                <Button x:Name="BtnZebra" Text="🔫 Zebra Scanner"
+                        Clicked="OnZebraMode" FontSize="12"
+                        BackgroundColor="#28A745" TextColor="White" CornerRadius="6" />
+                <Button x:Name="BtnCamera" Text="📷 Camera"
+                        Clicked="OnCameraMode" FontSize="12"
+                        BackgroundColor="#6C757D" TextColor="White" CornerRadius="6" />
+                <Button x:Name="BtnManual" Text="⌨️ Manual"
+                        Clicked="OnManualEntry" FontSize="12"
+                        BackgroundColor="#6C757D" TextColor="White" CornerRadius="6" />
             </Grid>
+
+            <!-- Row 2: Scanner Area (camera or status) -->
+            <Grid Grid.Row="2" HeightRequest="200">
+                <!-- Camera scanner (hidden by default on Zebra devices) -->
+                <zxing:CameraBarcodeReaderView x:Name="BarcodeReader"
+                    BarcodesDetected="OnBarcodesDetected"
+                    CameraLocation="Rear"
+                    IsVisible="False" />
+
+                <!-- Zebra scanner status -->
+                <Frame x:Name="ZebraScannerPanel" BackgroundColor="#F0FFF0"
+                       CornerRadius="10" Margin="10" Padding="20" HasShadow="False"
+                       IsVisible="True">
+                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="10">
+                        <Label Text="🔫" FontSize="48" HorizontalTextAlignment="Center" />
+                        <Label x:Name="ScannerStatusLabel" Text="Press hardware trigger to scan"
+                               FontSize="16" FontAttributes="Bold" TextColor="#28A745"
+                               HorizontalTextAlignment="Center" />
+                        <Label Text="Zebra DataWedge Active" FontSize="12" TextColor="#666"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Frame>
+            </Grid>
+
+            <!-- Row 3: Scan Result + Pending List -->
+            <Grid Grid.Row="3" RowDefinitions="Auto,*">
+                <Frame Margin="10,5" Padding="10" CornerRadius="8"
+                       BackgroundColor="#F0F8FF" HasShadow="False">
+                    <Label x:Name="LastScanLabel" Text="Ready to scan"
+                           FontSize="14" HorizontalTextAlignment="Center" />
+                </Frame>
+
+                <CollectionView Grid.Row="1" x:Name="PendingList" Margin="10,0">
+                    <CollectionView.Header>
+                        <Label x:Name="PendingHeader" Text="Pending Assets"
+                               FontAttributes="Bold" FontSize="14" Margin="0,5" TextColor="Black" />
+                    </CollectionView.Header>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="models:TrackingLineDto">
+                            <Grid ColumnDefinitions="Auto,*,Auto" Padding="10,8" ColumnSpacing="10">
+                                <Label Text="📦" FontSize="20" VerticalOptions="Center" />
+                                <VerticalStackLayout Grid.Column="1">
+                                    <Label Text="{Binding AssetCode}" FontAttributes="Bold"
+                       FontSize="14" TextColor="#1A365D" />
+                                    <Label Text="{Binding AssetName}" FontSize="12" TextColor="Gray" />
+                                    <Label FontSize="10" TextColor="#999" IsVisible="{Binding Barcode, Converter={StaticResource NullToBoolConverter}}">
+                                        <Label.FormattedText>
+                                            <FormattedString>
+                                                <Span Text="Barcode: " />
+                                                <Span Text="{Binding Barcode}" FontAttributes="Italic" />
+                                            </FormattedString>
+                                        </Label.FormattedText>
+                                    </Label>
+                                </VerticalStackLayout>
+                                <Label Grid.Column="2" Text="⏳" FontSize="20" VerticalOptions="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
+
+            <!-- Row 4: Complete Button -->
+            <Button Grid.Row="4" Text="✅ Complete Tracking"
+                    Clicked="OnCompleteClicked" Margin="10"
+                    BackgroundColor="#28A745" TextColor="White"
+                    CornerRadius="8" HeightRequest="50" FontSize="16" />
         </Grid>
     </ContentPage.Content>
 </ContentPage>

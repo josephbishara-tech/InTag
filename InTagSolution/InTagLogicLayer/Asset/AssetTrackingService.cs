@@ -244,6 +244,8 @@ namespace InTagLogicLayer.Asset
                 AssetId = l.AssetId,
                 AssetCode = l.Asset.AssetCode,
                 AssetName = l.Asset.Name,
+                Barcode = l.Asset.Barcode,
+                SerialNumber = l.Asset.SerialNumber,
                 Status = l.Status,
                 ScannedDate = l.ScannedDate,
                 ScannedCode = l.ScannedCode,
@@ -254,5 +256,43 @@ namespace InTagLogicLayer.Asset
                 Longitude = l.Longitude
             }).ToList()
         };
+
+        public async Task<TrackingLineVm> FindLineByScannedCodeAsync(int requestId, string scannedCode)
+        {
+            var code = scannedCode.Trim();
+
+            var line = await _uow.TrackingLines.Query()
+                .Include(l => l.Asset)
+                .Include(l => l.TrackingRequest)
+                .Include(l => l.FoundAtLocation)
+                .Where(l => l.TrackingRequestId == requestId && l.Status == TrackingLineStatus.Pending)
+                .FirstOrDefaultAsync(l =>
+                    l.Asset.AssetCode == code
+                    || l.Asset.Barcode == code
+                    || l.Asset.SerialNumber == code
+                    // Partial match for barcodes with prefix/suffix
+                    || (l.Asset.Barcode != null && l.Asset.Barcode.Contains(code))
+                    || (l.Asset.AssetCode != null && code.Contains(l.Asset.AssetCode))
+                );
+
+            if (line == null)
+                throw new KeyNotFoundException($"No pending asset matches code '{code}' in this request.");
+
+            return new TrackingLineVm
+            {
+                Id = line.Id,
+                AssetId = line.AssetId,
+                AssetCode = line.Asset.AssetCode,
+                AssetName = line.Asset.Name,
+                Barcode = line.Asset.Barcode,
+                SerialNumber = line.Asset.SerialNumber,
+                Status = line.Status,
+                ScannedDate = line.ScannedDate,
+                ScannedCode = line.ScannedCode,
+                FoundAtLocationName = line.FoundAtLocation?.Name,
+                ConditionAtScan = line.ConditionAtScan,
+                Remarks = line.Remarks
+            };
+        }
     }
 }

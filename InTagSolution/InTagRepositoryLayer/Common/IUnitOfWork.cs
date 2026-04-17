@@ -1,5 +1,6 @@
 using InTagEntitiesLayer.Asset;
 using InTagEntitiesLayer.Document;
+using InTagEntitiesLayer.ERP;
 using InTagEntitiesLayer.Inventory;
 using InTagEntitiesLayer.Maintenance;
 using InTagEntitiesLayer.Manufacturing;
@@ -38,6 +39,11 @@ namespace InTagRepositoryLayer.Common
         IGenericRepository<UserFolder> UserFolders { get; }
         IGenericRepository<UserFile> UserFiles { get; }
         IGenericRepository<InTagEntitiesLayer.Document.FileShare> FileShares { get; }
+        IGenericRepository<MetadataTemplate> MetadataTemplates { get; }
+        IGenericRepository<MetadataFieldDefinition> MetadataFieldDefinitions { get; }
+        IGenericRepository<DocumentMetadata> DocumentMetadatas { get; }
+        IGenericRepository<DocumentTag> DocumentTags { get; }
+        IGenericRepository<DocumentLink> DocumentLinks { get; }
 
         // Manufacturing Module
         IProductionOrderRepository ProductionOrders { get; }
@@ -74,6 +80,38 @@ namespace InTagRepositoryLayer.Common
         IGenericRepository<WorkflowStep> WorkflowSteps { get; }
         IGenericRepository<WorkflowAction> WorkflowActions { get; }
         IGenericRepository<Notification> Notifications { get; }
+
+        // ERP - Sales
+        IGenericRepository<Customer> Customers { get; }
+        IGenericRepository<Pricelist> Pricelists { get; }
+        IGenericRepository<PricelistLine> PricelistLines { get; }
+        IGenericRepository<SalesTeam> SalesTeams { get; }
+        IGenericRepository<CommissionRule> CommissionRules { get; }
+        IGenericRepository<Quotation> Quotations { get; }
+        IGenericRepository<QuotationLine> QuotationLines { get; }
+        IGenericRepository<SalesOrder> SalesOrders { get; }
+        IGenericRepository<SalesOrderLine> SalesOrderLines { get; }
+
+        // ERP - Purchase
+        IGenericRepository<Rfq> Rfqs { get; }
+        IGenericRepository<RfqLine> RfqLines { get; }
+        IGenericRepository<PurchaseOrder> PurchaseOrders { get; }
+        IGenericRepository<PurchaseOrderLine> PurchaseOrderLines { get; }
+
+        // ERP - Accounting
+        IGenericRepository<Account> Accounts { get; }
+        IGenericRepository<CostCenter> CostCenters { get; }
+        IGenericRepository<Journal> Journals { get; }
+        IGenericRepository<JournalEntry> JournalEntries { get; }
+        IGenericRepository<JournalEntryLine> JournalEntryLines { get; }
+        IGenericRepository<Invoice> Invoices { get; }
+        IGenericRepository<InvoiceLine> InvoiceLines { get; }
+        IGenericRepository<Payment> Payments { get; }
+        IGenericRepository<Budget> Budgets { get; }
+
+        // ERP - Stock Move
+        IGenericRepository<StockMove> StockMoves { get; }
+        IGenericRepository<StockMoveLine> StockMoveLines { get; }
         Task<int> SaveChangesAsync();
     }
 }

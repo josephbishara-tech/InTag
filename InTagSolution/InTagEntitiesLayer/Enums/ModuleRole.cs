@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -18,13 +18,26 @@ namespace InTagEntitiesLayer.Enums
     /// <summary>
     /// Platform modules for per-module RBAC
     /// </summary>
+    //public enum PlatformModule
+    //{
+    //    Asset,
+    //    Document,
+    //    Manufacturing,
+    //    Maintenance,
+    //    Inventory,
+    //    Workflow
+    //}
+
     public enum PlatformModule
     {
-        Asset,
-        Document,
-        Manufacturing,
-        Maintenance,
-        Inventory,
-        Workflow
+        Asset = 0,
+        Document = 1,
+        Manufacturing = 2,
+        Maintenance = 3,
+        Inventory = 4,
+        Workflow = 5,
+        Sales = 6,
+        Purchase = 7,
+        Accounting = 8
     }
 }
